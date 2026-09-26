@@ -39,6 +39,28 @@ function buildGraph(steps) {
   return { nodes, edges }
 }
 
+// Sums estimatedDays across steps that have a real number set, skipping the rest.
+function sumEstimatedDays(steps) {
+  return steps.reduce((total, step) => {
+    return typeof step.estimatedDays === 'number' ? total + step.estimatedDays : total
+  }, 0)
+}
+
+// Pulls the first number out of each step's free-text fees string and sums
+// what's parseable, plus how many steps that covered (for an honest label).
+function sumApproxFees(steps) {
+  let total = 0
+  let matchedCount = 0
+  for (const step of steps) {
+    const match = typeof step.fees === 'string' ? step.fees.match(/\d+/) : null
+    if (match) {
+      total += Number(match[0])
+      matchedCount += 1
+    }
+  }
+  return { total, matchedCount }
+}
+
 function RoadmapGraph({ steps, onStepSelect, completedStepIds = [] }) {
   const { nodes, edges } = buildGraph(steps)
 
@@ -51,8 +73,21 @@ function RoadmapGraph({ steps, onStepSelect, completedStepIds = [] }) {
   const totalSteps = steps.length
   const percentage = totalSteps > 0 ? Math.round((completedCount / totalSteps) * 100) : 0
 
+  const totalDays = sumEstimatedDays(steps)
+  const { total: feeTotal, matchedCount: feeMatchedCount } = sumApproxFees(steps)
+
   return (
     <div className="w-full max-w-4xl">
+      {(totalDays > 0 || feeMatchedCount > 0) && (
+        <div className="mb-2 flex flex-wrap gap-x-4 text-sm text-slate-700">
+          {totalDays > 0 && <span>Estimated total time: {totalDays} day(s)</span>}
+          {feeMatchedCount > 0 && (
+            <span>
+              Approx. total fees: ₹{feeTotal} (based on {feeMatchedCount} of {totalSteps} steps)
+            </span>
+          )}
+        </div>
+      )}
       <div className="mb-2 text-sm text-slate-600">
         {completedCount} of {totalSteps} steps done — {percentage}%
       </div>
