@@ -7,7 +7,7 @@ const NODE_Y = 100
 // Turns an ordered step list into React Flow nodes (one per step, simple fixed
 // spacing left-to-right) and edges (one per dependsOn entry, pointing from the
 // depended-on step to the dependent one).
-function buildGraph(steps, onNodeClick) {
+function buildGraph(steps) {
   const nodes = steps.map((step, index) => ({
     id: step.stepId,
     position: { x: index * NODE_SPACING_X, y: NODE_Y },
@@ -39,27 +39,42 @@ function buildGraph(steps, onNodeClick) {
   return { nodes, edges }
 }
 
-function RoadmapGraph({ steps, onStepSelect }) {
-  const { nodes, edges } = buildGraph(steps, onStepSelect)
+function RoadmapGraph({ steps, onStepSelect, completedStepIds = [] }) {
+  const { nodes, edges } = buildGraph(steps)
 
   function handleNodeClick(_event, node) {
     const step = steps.find((s) => s.stepId === node.id)
     if (step) onStepSelect(step)
   }
 
+  const completedCount = steps.filter((s) => completedStepIds.includes(s.stepId)).length
+  const totalSteps = steps.length
+  const percentage = totalSteps > 0 ? Math.round((completedCount / totalSteps) * 100) : 0
+
   return (
-    <div className="h-96 w-full max-w-4xl rounded-md border border-slate-200 bg-slate-50">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodeClick={handleNodeClick}
-        fitView
-        nodesDraggable={false}
-        nodesConnectable={false}
-      >
-        <Background />
-        <Controls />
-      </ReactFlow>
+    <div className="w-full max-w-4xl">
+      <div className="mb-2 text-sm text-slate-600">
+        {completedCount} of {totalSteps} steps done — {percentage}%
+      </div>
+      <div className="mb-3 h-2 w-full rounded-full bg-slate-200">
+        <div
+          className="h-2 rounded-full bg-blue-600 transition-all"
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+      <div className="h-96 w-full rounded-md border border-slate-200 bg-slate-50">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodeClick={handleNodeClick}
+          fitView
+          nodesDraggable={false}
+          nodesConnectable={false}
+        >
+          <Background />
+          <Controls />
+        </ReactFlow>
+      </div>
     </div>
   )
 }

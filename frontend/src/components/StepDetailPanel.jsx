@@ -1,5 +1,10 @@
-// Shows one step's full details. Renders nothing if no step is selected.
-function StepDetailPanel({ step, onClose }) {
+import { useAuth } from '../context/AuthContext'
+
+// Shows one step's full details, plus a mark-done control when logged in.
+// Renders nothing if no step is selected.
+function StepDetailPanel({ step, onClose, isCompleted, onToggleComplete }) {
+  const { user } = useAuth()
+
   if (!step) return null
 
   const hasRealSource = typeof step.sourceUrl === 'string' && step.sourceUrl.startsWith('http')
@@ -17,6 +22,19 @@ function StepDetailPanel({ step, onClose }) {
           ✕
         </button>
       </div>
+
+      {user ? (
+        <label className="mb-4 flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={Boolean(isCompleted)}
+            onChange={(e) => onToggleComplete(step.stepId, e.target.checked)}
+          />
+          Mark as done
+        </label>
+      ) : (
+        <p className="mb-4 text-sm text-slate-500">Log in to save your progress.</p>
+      )}
 
       <dl className="grid grid-cols-2 gap-3 text-sm">
         <div>
