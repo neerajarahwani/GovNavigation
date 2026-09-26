@@ -97,6 +97,17 @@ async function updateStep(req, res) {
     return res.status(400).json({ success: false, error: 'sourceUrl cannot be empty.' });
   }
 
+  // Validate any id lists explicitly, so a bad id gives a clean 400 instead of
+  // an uncaught cast error turning into a generic 500.
+  for (const field of ['dependsOn', 'canRunParallelWith']) {
+    if (Object.prototype.hasOwnProperty.call(update, field)) {
+      const allValid = (update[field] || []).every((id) => mongoose.isValidObjectId(id));
+      if (!allValid) {
+        return res.status(400).json({ success: false, error: `${field} must be a list of valid ids.` });
+      }
+    }
+  }
+
   const step = await Step.findByIdAndUpdate(stepId, update, { new: true, runValidators: true });
   if (!step) {
     return res.status(404).json({ success: false, error: 'Step not found.' });
