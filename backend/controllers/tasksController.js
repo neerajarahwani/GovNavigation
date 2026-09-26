@@ -72,6 +72,7 @@ function toStepResponse(s) {
     eligibility: s.eligibility,
     prerequisites: s.prerequisites,
     dependsOn: s.dependsOn,
+    canRunParallelWith: s.canRunParallelWith,
     sourceUrl: s.sourceUrl,
     lastVerified: s.lastVerified,
   };
