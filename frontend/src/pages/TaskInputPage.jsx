@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { queryTask, fetchTaskById } from '../api/tasksApi'
 import { getTaskProgress, listProgress, markStep } from '../api/progressApi'
+import { getAnnouncements } from '../api/announcementsApi'
 import { useAuth } from '../context/AuthContext'
 import TaskInputForm from '../components/TaskInputForm'
 import RoadmapGraph from '../components/RoadmapGraph'
 import StepDetailPanel from '../components/StepDetailPanel'
 import SavedTasksList from '../components/SavedTasksList'
+import AnnouncementBanner from '../components/AnnouncementBanner'
 import Header from '../components/Header'
 
 // Friendly messages for the response shapes the query/fetch endpoints can return —
@@ -25,6 +27,15 @@ function TaskInputPage() {
   const [errorMessage, setErrorMessage] = useState('')
   const [completedStepIds, setCompletedStepIds] = useState([])
   const [savedTasks, setSavedTasks] = useState([])
+  const [globalAnnouncements, setGlobalAnnouncements] = useState([])
+  const [taskAnnouncements, setTaskAnnouncements] = useState([])
+
+  // Global announcements are fetched once, on mount — same for every visitor.
+  useEffect(() => {
+    getAnnouncements().then((response) => {
+      if (response.success) setGlobalAnnouncements(response.data)
+    })
+  }, [])
 
   const refreshSavedTasks = useCallback(async () => {
     if (!token) {
@@ -66,6 +77,15 @@ function TaskInputPage() {
     setResult(orderedResponse.data)
     // Progress for this task is fetched by the effect below, keyed on
     // [token, taskId] — avoids fetching it twice here and there.
+
+    // The backend returns global + task-specific together for a given taskId —
+    // filter to task-specific only here, since the global ones are already
+    // shown once, near the top of the page.
+    const announcementsResponse = await getAnnouncements(taskId)
+    const taskSpecific = announcementsResponse.success
+      ? announcementsResponse.data.filter((a) => a.relatedTaskId)
+      : []
+    setTaskAnnouncements(taskSpecific)
   }
 
   async function handleSubmit({ text, city }) {
@@ -125,6 +145,8 @@ function TaskInputPage() {
         <p className="text-slate-500">Tell us what you need, in your own words.</p>
       </div>
 
+      <AnnouncementBanner announcements={globalAnnouncements} />
+
       {user && <SavedTasksList tasks={savedTasks} onSelectTask={handleSelectSavedTask} />}
 
       <TaskInputForm onSubmit={handleSubmit} isLoading={isLoading} />
@@ -141,6 +163,7 @@ function TaskInputPage() {
             <h2 className="text-xl font-semibold text-slate-900">{result.task.title}</h2>
             <p className="text-sm text-slate-500">{result.task.city}</p>
           </div>
+          <AnnouncementBanner announcements={taskAnnouncements} />
           <RoadmapGraph
             steps={result.steps}
             onStepSelect={setSelectedStep}

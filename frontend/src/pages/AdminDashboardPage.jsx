@@ -5,6 +5,7 @@ import Header from '../components/Header'
 import AdminTaskList from '../components/AdminTaskList'
 import AdminTaskEditForm from '../components/AdminTaskEditForm'
 import AdminStepEditForm from '../components/AdminStepEditForm'
+import AdminAnnouncementsPanel from '../components/AdminAnnouncementsPanel'
 
 function AdminDashboardPage() {
   const { user, token } = useAuth()
@@ -98,6 +99,8 @@ function AdminDashboardPage() {
             ))}
           </div>
         )}
+
+        <AdminAnnouncementsPanel token={token} tasks={tasks} />
       </div>
     </main>
   )
