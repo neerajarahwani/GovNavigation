@@ -9,6 +9,7 @@ import StepDetailPanel from '../components/StepDetailPanel'
 import SavedTasksList from '../components/SavedTasksList'
 import AnnouncementBanner from '../components/AnnouncementBanner'
 import DocumentChecklist from '../components/DocumentChecklist'
+import ExportPdfButton from '../components/ExportPdfButton'
 import Header from '../components/Header'
 
 // Friendly messages for the response shapes the query/fetch endpoints can return —
@@ -157,6 +158,8 @@ function TaskInputPage() {
     }
   }
 
+  const visibleSteps = result ? getVisibleSteps(result.steps, checkedDocuments) : []
+
   return (
     <main className="flex min-h-screen flex-col items-center gap-8 bg-slate-50 px-4 py-12">
       <Header />
@@ -186,7 +189,7 @@ function TaskInputPage() {
           <AnnouncementBanner announcements={taskAnnouncements} />
           <DocumentChecklist steps={result.steps} onChange={setCheckedDocuments} />
           <RoadmapGraph
-            steps={getVisibleSteps(result.steps, checkedDocuments)}
+            steps={visibleSteps}
             onStepSelect={setSelectedStep}
             completedStepIds={completedStepIds}
           />
@@ -196,6 +199,7 @@ function TaskInputPage() {
             isCompleted={selectedStep ? completedStepIds.includes(selectedStep.stepId) : false}
             onToggleComplete={handleToggleComplete}
           />
+          <ExportPdfButton task={result.task} steps={visibleSteps} />
         </>
       )}
     </main>
