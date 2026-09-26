@@ -8,10 +8,28 @@ import RoadmapGraph from '../components/RoadmapGraph'
 import StepDetailPanel from '../components/StepDetailPanel'
 import SavedTasksList from '../components/SavedTasksList'
 import AnnouncementBanner from '../components/AnnouncementBanner'
+import DocumentChecklist from '../components/DocumentChecklist'
 import Header from '../components/Header'
 
 // Friendly messages for the response shapes the query/fetch endpoints can return —
 // never show a raw error object to the citizen.
+// Hides any step whose name matches a checked-off document (case-insensitive
+// contains match), then strips dependsOn/canRunParallelWith references to
+// whatever got hidden, so the graph never tries to draw an edge to a step
+// that isn't shown.
+function getVisibleSteps(allSteps, checkedDocuments) {
+  const checkedList = Array.from(checkedDocuments).map((d) => d.toLowerCase())
+  const visible = allSteps.filter(
+    (step) => !checkedList.some((doc) => step.name.toLowerCase().includes(doc))
+  )
+  const visibleIds = new Set(visible.map((s) => s.stepId))
+  return visible.map((step) => ({
+    ...step,
+    dependsOn: (step.dependsOn || []).filter((id) => visibleIds.has(String(id))),
+    canRunParallelWith: (step.canRunParallelWith || []).filter((id) => visibleIds.has(String(id))),
+  }))
+}
+
 function messageForResponse(response) {
   if (response.status === 404) {
     return response.error || "We don't have information on this yet. Try describing it differently."
@@ -29,6 +47,7 @@ function TaskInputPage() {
   const [savedTasks, setSavedTasks] = useState([])
   const [globalAnnouncements, setGlobalAnnouncements] = useState([])
   const [taskAnnouncements, setTaskAnnouncements] = useState([])
+  const [checkedDocuments, setCheckedDocuments] = useState(new Set())
 
   // Global announcements are fetched once, on mount — same for every visitor.
   useEffect(() => {
@@ -75,6 +94,7 @@ function TaskInputPage() {
       return
     }
     setResult(orderedResponse.data)
+    setCheckedDocuments(new Set())
     // Progress for this task is fetched by the effect below, keyed on
     // [token, taskId] — avoids fetching it twice here and there.
 
@@ -164,8 +184,9 @@ function TaskInputPage() {
             <p className="text-sm text-slate-500">{result.task.city}</p>
           </div>
           <AnnouncementBanner announcements={taskAnnouncements} />
+          <DocumentChecklist steps={result.steps} onChange={setCheckedDocuments} />
           <RoadmapGraph
-            steps={result.steps}
+            steps={getVisibleSteps(result.steps, checkedDocuments)}
             onStepSelect={setSelectedStep}
             completedStepIds={completedStepIds}
           />
