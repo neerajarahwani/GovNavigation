@@ -1,5 +1,5 @@
 // Turns real, pasted government page text into the same clean Step shape, using
-// Claude — but only using what's actually written in the given text, never
+// Gemini — but only using what's actually written in the given text, never
 // answering from the model's own knowledge. Does NOT write to the database; it
 // prints JSON for you to read and check by hand first.
 //
@@ -40,29 +40,27 @@ async function main() {
     process.exit(1);
   }
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const model = 'gemini-3.8-flash';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GOOGLE_API_KEY}`;
+
+  const response = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-5',
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: sourceText }],
+      system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents: [{ role: 'user', parts: [{ text: sourceText }] }],
+      generationConfig: { responseMimeType: 'application/json' },
     }),
   });
 
   if (!response.ok) {
     const errText = await response.text();
-    console.error(`Claude API call failed: ${response.status} ${errText}`);
+    console.error(`Gemini API call failed: ${response.status} ${errText}`);
     process.exit(1);
   }
 
   const data = await response.json();
-  const rawText = data.content?.[0]?.text || '';
+  const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
   console.log('--- Extracted JSON (review before using) ---');
   console.log(rawText);
