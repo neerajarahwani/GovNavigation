@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Task = require('../models/Task');
 const Step = require('../models/Step');
 const { askGemini } = require('../utils/geminiClient');
@@ -59,6 +60,81 @@ async function findBestMatchingTask(serviceText, cityText) {
   return bestScore > 0 ? best : null;
 }
 
+// Shapes a Step document into the response format both endpoints share.
+function toStepResponse(s) {
+  return {
+    stepId: s._id,
+    name: s.name,
+    department: s.department,
+    documents: s.documents,
+    fees: s.fees,
+    estimatedDays: s.estimatedDays,
+    eligibility: s.eligibility,
+    prerequisites: s.prerequisites,
+    dependsOn: s.dependsOn,
+    sourceUrl: s.sourceUrl,
+    lastVerified: s.lastVerified,
+  };
+}
+
+// Puts steps in "do this before that" order: a step only appears once every step
+// listed in its dependsOn has already been placed. Safe against a bad/circular
+// dependency — anything left over after every real placement gets appended at the
+// end instead of looping forever.
+function orderStepsByDependency(steps) {
+  const byId = new Map(steps.map((s) => [String(s._id), s]));
+  const placed = new Set();
+  const ordered = [];
+
+  let progressMadeThisPass = true;
+  while (placed.size < steps.length && progressMadeThisPass) {
+    progressMadeThisPass = false;
+    for (const step of steps) {
+      const id = String(step._id);
+      if (placed.has(id)) continue;
+      const dependsOnIds = (step.dependsOn || []).map(String);
+      const allDependenciesPlaced = dependsOnIds.every((depId) => placed.has(depId) || !byId.has(depId));
+      if (allDependenciesPlaced) {
+        ordered.push(step);
+        placed.add(id);
+        progressMadeThisPass = true;
+      }
+    }
+  }
+
+  // Anything left (a circular dependency) still gets included, just at the end.
+  for (const step of steps) {
+    if (!placed.has(String(step._id))) ordered.push(step);
+  }
+
+  return ordered;
+}
+
+// GET /api/tasks/:taskId
+async function fetchById(req, res) {
+  const { taskId } = req.params;
+
+  if (!mongoose.isValidObjectId(taskId)) {
+    return res.status(404).json({ success: false, error: 'Task not found.' });
+  }
+
+  const task = await Task.findById(taskId);
+  if (!task) {
+    return res.status(404).json({ success: false, error: 'Task not found.' });
+  }
+
+  const steps = await Step.find({ taskId: task._id });
+  const orderedSteps = orderStepsByDependency(steps);
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      task: { taskId: task._id, title: task.title, city: task.city },
+      steps: orderedSteps.map(toStepResponse),
+    },
+  });
+}
+
 // POST /api/tasks/query
 async function query(req, res) {
   const { text, city } = req.body || {};
@@ -91,21 +167,9 @@ async function query(req, res) {
     success: true,
     data: {
       task: { taskId: task._id, title: task.title, city: task.city },
-      steps: steps.map((s) => ({
-        stepId: s._id,
-        name: s.name,
-        department: s.department,
-        documents: s.documents,
-        fees: s.fees,
-        estimatedDays: s.estimatedDays,
-        eligibility: s.eligibility,
-        prerequisites: s.prerequisites,
-        dependsOn: s.dependsOn,
-        sourceUrl: s.sourceUrl,
-        lastVerified: s.lastVerified,
-      })),
+      steps: steps.map(toStepResponse),
     },
   });
 }
 
-module.exports = { query };
+module.exports = { query, fetchById };
