@@ -6,6 +6,8 @@ const authRoutes = require('./routes/auth.routes');
 const tasksRoutes = require('./routes/tasks.routes');
 const progressRoutes = require('./routes/progress.routes');
 const adminRoutes = require('./routes/admin.routes');
+const adminAnnouncementsRoutes = require('./routes/adminAnnouncements.routes');
+const announcementsRoutes = require('./routes/announcements.routes');
 
 const app = express();
 app.use(cors());
@@ -20,6 +22,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin/announcements', adminAnnouncementsRoutes);
+app.use('/api/announcements', announcementsRoutes);
 
 // Catch-all error handler — reached whenever a route (wrapped with asyncHandler)
 // throws or its promise rejects, so a database hiccup or bug sends a clean
