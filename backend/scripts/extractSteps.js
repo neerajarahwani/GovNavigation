@@ -6,6 +6,7 @@
 // Run manually: node backend/scripts/extractSteps.js path/to/pasted-text.txt
 require('dotenv').config();
 const fs = require('fs');
+const { askGemini } = require('../utils/geminiClient');
 
 const SYSTEM_PROMPT = `You extract structured information from a piece of government
 process text. Use ONLY information present in the text below. If a field is not
@@ -40,27 +41,13 @@ async function main() {
     process.exit(1);
   }
 
-  const model = 'gemini-3.8-flash';
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GOOGLE_API_KEY}`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-      contents: [{ role: 'user', parts: [{ text: sourceText }] }],
-      generationConfig: { responseMimeType: 'application/json' },
-    }),
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error(`Gemini API call failed: ${response.status} ${errText}`);
+  let rawText;
+  try {
+    rawText = await askGemini(SYSTEM_PROMPT, sourceText, { asJson: true });
+  } catch (err) {
+    console.error(err.message);
     process.exit(1);
   }
-
-  const data = await response.json();
-  const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
   console.log('--- Extracted JSON (review before using) ---');
   console.log(rawText);
