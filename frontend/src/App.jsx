@@ -1,14 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import TaskInputPage from './pages/TaskInputPage'
-
-// Placeholders for group 2 — replaced with the real LoginPage/SignupPage there.
-function LoginPagePlaceholder() {
-  return <p className="p-8 text-center text-slate-500">Login page coming soon.</p>
-}
-function SignupPagePlaceholder() {
-  return <p className="p-8 text-center text-slate-500">Signup page coming soon.</p>
-}
+import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
 
 function App() {
   return (
@@ -16,8 +10,8 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<TaskInputPage />} />
-          <Route path="/login" element={<LoginPagePlaceholder />} />
-          <Route path="/signup" element={<SignupPagePlaceholder />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
