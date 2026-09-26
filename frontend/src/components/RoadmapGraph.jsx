@@ -1,42 +1,110 @@
 import ReactFlow, { Background, Controls, Position } from 'reactflow'
 import 'reactflow/dist/style.css'
 
-const NODE_SPACING_X = 260
-const NODE_Y = 100
+const COLUMN_SPACING_X = 280
+const ROW_SPACING_Y = 110
 
-// Turns an ordered step list into React Flow nodes (one per step, simple fixed
-// spacing left-to-right) and edges (one per dependsOn entry, pointing from the
-// depended-on step to the dependent one).
+// Assigns each step a column based on dependency depth (how many steps must
+// happen before it), then merges canRunParallelWith pairs into the same
+// column, so explicitly-linked parallel steps always land side by side even in
+// the rare case dependency depth alone wouldn't have put them there.
+function computeColumns(steps) {
+  const column = new Map()
+
+  // Base pass — steps arrive in dependency order, so each step's dependsOn
+  // targets already have a column by the time we reach it.
+  for (const step of steps) {
+    const depColumns = (step.dependsOn || []).map((depId) => column.get(String(depId)) ?? 0)
+    column.set(step.stepId, depColumns.length > 0 ? Math.max(...depColumns) + 1 : 0)
+  }
+
+  // Merge canRunParallelWith pairs into the same column. Repeat until stable —
+  // a step can be linked to more than one partner.
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const step of steps) {
+      for (const partnerId of step.canRunParallelWith || []) {
+        const a = column.get(step.stepId)
+        const b = column.get(String(partnerId))
+        if (b === undefined) continue
+        const merged = Math.max(a, b)
+        if (a !== merged) {
+          column.set(step.stepId, merged)
+          changed = true
+        }
+        if (b !== merged) {
+          column.set(String(partnerId), merged)
+          changed = true
+        }
+      }
+    }
+  }
+
+  return column
+}
+
+// Turns an ordered step list into React Flow nodes (grouped into columns by
+// dependency depth, with canRunParallelWith steps forced into the same
+// column) and edges: solid arrowed ones for dependsOn, dashed undirected ones
+// for canRunParallelWith.
 function buildGraph(steps) {
-  const nodes = steps.map((step, index) => ({
-    id: step.stepId,
-    position: { x: index * NODE_SPACING_X, y: NODE_Y },
-    // Left-to-right layout — connect out the right side, in on the left side, so
-    // arrows flow forward in a straight line instead of looping via the default
-    // top/bottom handles.
-    sourcePosition: Position.Right,
-    targetPosition: Position.Left,
-    data: { label: step.name },
-    style: {
-      border: '1px solid #cbd5e1',
-      borderRadius: 8,
-      padding: 10,
-      background: 'white',
-      cursor: 'pointer',
-      width: 220,
-    },
-  }))
+  const column = computeColumns(steps)
+  const rowInColumn = new Map() // column -> how many nodes already placed there
 
-  const edges = steps.flatMap((step) =>
+  const nodes = steps.map((step) => {
+    const col = column.get(step.stepId)
+    const row = rowInColumn.get(col) || 0
+    rowInColumn.set(col, row + 1)
+
+    return {
+      id: step.stepId,
+      position: { x: col * COLUMN_SPACING_X, y: row * ROW_SPACING_Y },
+      // Left-to-right layout — connect out the right side, in on the left side,
+      // so arrows flow forward in a straight line instead of looping via the
+      // default top/bottom handles.
+      sourcePosition: Position.Right,
+      targetPosition: Position.Left,
+      data: { label: step.name },
+      style: {
+        border: '1px solid #cbd5e1',
+        borderRadius: 8,
+        padding: 10,
+        background: 'white',
+        cursor: 'pointer',
+        width: 220,
+      },
+    }
+  })
+
+  const dependsOnEdges = steps.flatMap((step) =>
     (step.dependsOn || []).map((depId) => ({
-      id: `${depId}-${step.stepId}`,
+      id: `dep-${depId}-${step.stepId}`,
       source: String(depId),
       target: step.stepId,
       animated: false,
     }))
   )
 
-  return { nodes, edges }
+  // Dashed, undirected-looking connector between canRunParallelWith pairs —
+  // only added once per pair (when this step's id sorts first) so the same
+  // pair isn't drawn twice from each side.
+  const parallelEdges = steps.flatMap((step) =>
+    (step.canRunParallelWith || [])
+      .filter((partnerId) => step.stepId < String(partnerId))
+      .map((partnerId) => ({
+        id: `parallel-${step.stepId}-${partnerId}`,
+        source: step.stepId,
+        target: String(partnerId),
+        type: 'straight',
+        animated: false,
+        style: { strokeDasharray: '5,5', stroke: '#94a3b8' },
+        label: 'can be done together',
+        labelStyle: { fill: '#64748b', fontSize: 11 },
+      }))
+  )
+
+  return { nodes, edges: [...dependsOnEdges, ...parallelEdges] }
 }
 
 // Sums estimatedDays across steps that have a real number set, skipping the rest.
