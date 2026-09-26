@@ -10,6 +10,12 @@ Do not answer their question or add any other information. Respond with ONLY val
 JSON in exactly this shape: { "service": "", "city": "" }. Leave a field as an empty
 string if it isn't mentioned.`;
 
+// Escapes special pattern-matching characters so user-provided text can be safely
+// dropped into a RegExp without changing its meaning or risking a slow pattern.
+function escapeForRegex(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // Splits text into lowercase words for simple keyword-overlap matching.
 function toWordSet(text) {
   return new Set(
@@ -27,7 +33,9 @@ async function findBestMatchingTask(serviceText, cityText) {
   const serviceWords = toWordSet(serviceText);
   if (serviceWords.size === 0) return null;
 
-  const candidates = await Task.find(cityText ? { city: new RegExp(`^${cityText}$`, 'i') } : {});
+  const candidates = await Task.find(
+    cityText ? { city: new RegExp(`^${escapeForRegex(cityText)}$`, 'i') } : {}
+  );
   const pool = candidates.length > 0 ? candidates : await Task.find({});
 
   let best = null;
