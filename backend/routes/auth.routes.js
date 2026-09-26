@@ -1,9 +1,10 @@
 const express = require('express');
 const { signup, login } = require('../controllers/authController');
+const asyncHandler = require('../middleware/asyncHandler');
 
 const router = express.Router();
 
-router.post('/signup', signup);
-router.post('/login', login);
+router.post('/signup', asyncHandler(signup));
+router.post('/login', asyncHandler(login));
 
 module.exports = router;

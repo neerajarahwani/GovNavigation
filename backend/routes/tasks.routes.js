@@ -1,6 +1,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { query, fetchById } = require('../controllers/tasksController');
+const asyncHandler = require('../middleware/asyncHandler');
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ const queryLimiter = rateLimit({
   message: { success: false, error: 'Too many requests — please wait a moment and try again.' },
 });
 
-router.post('/query', queryLimiter, query);
-router.get('/:taskId', fetchById);
+router.post('/query', queryLimiter, asyncHandler(query));
+router.get('/:taskId', asyncHandler(fetchById));
 
 module.exports = router;

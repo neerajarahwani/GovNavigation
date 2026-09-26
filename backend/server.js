@@ -17,6 +17,14 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', tasksRoutes);
 
+// Catch-all error handler — reached whenever a route (wrapped with asyncHandler)
+// throws or its promise rejects, so a database hiccup or bug sends a clean
+// response instead of leaving the request hanging with no reply at all.
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ success: false, error: 'Something went wrong. Please try again.' });
+});
+
 const PORT = process.env.PORT || 5000;
 
 async function start() {
