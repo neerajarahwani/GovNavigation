@@ -1,6 +1,6 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
-const { query } = require('../controllers/tasksController');
+const { query, fetchById } = require('../controllers/tasksController');
 
 const router = express.Router();
 
@@ -16,5 +16,6 @@ const queryLimiter = rateLimit({
 });
 
 router.post('/query', queryLimiter, query);
+router.get('/:taskId', fetchById);
 
 module.exports = router;
