@@ -29,10 +29,11 @@ async function run() {
     return;
   }
 
+  const licenseStep = await Step.findOne({ taskId: task._id, name: 'Get a Shop and Establishment License' });
   const gstStep = await Step.findOne({ taskId: task._id, name: 'Apply for GST Registration' });
   const profTaxStep = await Step.findOne({ taskId: task._id, name: 'Register for Professional Tax' });
 
-  if (!gstStep || !profTaxStep) {
+  if (!licenseStep || !gstStep || !profTaxStep) {
     console.error('Expected existing steps not found — aborting without changes.');
     process.exit(1);
   }
@@ -60,6 +61,14 @@ async function run() {
 
   profTaxStep.dependsOn = [...profTaxStep.dependsOn, newStep._id];
   await profTaxStep.save();
+
+  // The license and the PAN card are genuinely independent of each other —
+  // mark them as parallel too, so the graph doesn't visually group them the
+  // same way it groups GST/Professional Tax without actually saying so.
+  newStep.canRunParallelWith = [licenseStep._id];
+  await newStep.save();
+  licenseStep.canRunParallelWith = [...licenseStep.canRunParallelWith, newStep._id];
+  await licenseStep.save();
 
   task.steps = [...task.steps, newStep._id];
   await task.save();
