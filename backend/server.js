@@ -4,6 +4,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth.routes');
 const tasksRoutes = require('./routes/tasks.routes');
+const progressRoutes = require('./routes/progress.routes');
 
 const app = express();
 app.use(cors());
@@ -16,6 +17,7 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', tasksRoutes);
+app.use('/api/progress', progressRoutes);
 
 // Catch-all error handler — reached whenever a route (wrapped with asyncHandler)
 // throws or its promise rejects, so a database hiccup or bug sends a clean
