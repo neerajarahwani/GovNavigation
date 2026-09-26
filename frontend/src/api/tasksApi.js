@@ -14,3 +14,11 @@ export async function queryTask({ text, city }) {
   const body = await response.json()
   return { status: response.status, ...body }
 }
+
+// Fetches one task by id with its steps in dependency order — used after a
+// successful search to get a guaranteed-correct order for the roadmap graph.
+export async function fetchTaskById(taskId) {
+  const response = await fetch(`${BASE_URL}/api/tasks/${taskId}`)
+  const body = await response.json()
+  return { status: response.status, ...body }
+}
