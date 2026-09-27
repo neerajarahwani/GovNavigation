@@ -109,14 +109,14 @@ function TaskInputPage() {
     setTaskAnnouncements(taskSpecific)
   }
 
-  async function handleSubmit({ text, city }) {
+  async function handleSubmit({ text }) {
     setIsLoading(true)
     setErrorMessage('')
     setResult(null)
     setSelectedStep(null)
 
     try {
-      const searchResponse = await queryTask({ text, city })
+      const searchResponse = await queryTask({ text })
       if (!searchResponse.success) {
         setErrorMessage(messageForResponse(searchResponse))
         return

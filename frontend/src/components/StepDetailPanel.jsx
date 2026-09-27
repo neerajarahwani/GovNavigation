@@ -58,6 +58,9 @@ function StepDetailPanel({ step, onClose, isCompleted, onToggleComplete }) {
         <div className="col-span-2">
           <dt className="font-medium text-slate-500">Documents needed</dt>
           <dd className="text-slate-800">
+            {step.prerequisites && step.prerequisites.length > 0 && (
+              <p className="mb-1 text-sm italic text-slate-600">{step.prerequisites.join(' ')}</p>
+            )}
             {step.documents && step.documents.length > 0 ? (
               <ul className="list-disc pl-5">
                 {step.documents.map((doc) => (

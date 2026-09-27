@@ -13,11 +13,14 @@ const REAL_TASKS = [
   {
     title: 'Register to Vote (Voter ID)',
     city: 'All India',
-    keywords: ['voter id', 'voting', 'register to vote', 'election', 'eci', 'electoral roll'],
+    keywords: ['voter id', 'voting', 'register to vote', 'voter registration', 'election', 'eci', 'electoral roll'],
+    // Split by scripts/rebuildVoterIdSteps.js into 3 real steps (register +
+    // 2 document categories, each with its own official source). This single
+    // "step" entry here only seeds the base task before that script runs.
     step: {
-      name: 'Register to Vote',
+      name: 'Register to Vote (Form 6)',
       department: 'Election Commission of India',
-      documents: ['Form 6'],
+      documents: [],
       fees: 'Free of cost',
       estimatedDays: null,
       eligibility:
@@ -25,7 +28,10 @@ const REAL_TASKS = [
         '(1 Jan, 1 April, 1 July and 1 Oct of the year of revision of electoral roll), ' +
         'is an ordinary resident of the part/polling area of the constituency where you ' +
         'want to be enrolled, and is not disqualified to be enrolled as an elector.',
-      prerequisites: [],
+      prerequisites: [
+        'A recent passport-size colour photograph (4.5cm x 3.5cm, white background).',
+        'Aadhaar number, if available (for authentication of entries).',
+      ],
       sourceUrl: 'https://www.eci.gov.in/faq/en/how-to-register/',
     },
   },

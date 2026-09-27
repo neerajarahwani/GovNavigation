@@ -1,23 +1,13 @@
 import { useState } from 'react'
 
-const SERVICE_OPTIONS = [
-  { label: 'Business registration', value: 'business registration' },
-  { label: 'Birth certificate', value: 'birth certificate' },
-]
-
-const CITY_OPTIONS = ['Mumbai']
-
-// The search box plus the dropdown fallback. Typed text wins over the dropdowns if
-// both are filled, matching the backend's own behavior.
+// A single free-text search box — describe what you need in plain language,
+// and the backend's Gemini extraction step figures out the service and city.
 function TaskInputForm({ onSubmit, isLoading }) {
   const [text, setText] = useState('')
-  const [service, setService] = useState('')
-  const [city, setCity] = useState('')
 
   function handleSubmit(e) {
     e.preventDefault()
-    const finalText = text.trim() || service
-    onSubmit({ text: finalText, city })
+    onSubmit({ text: text.trim() })
   }
 
   return (
@@ -35,43 +25,9 @@ function TaskInputForm({ onSubmit, isLoading }) {
         />
       </label>
 
-      <div className="flex items-center gap-2 text-sm text-slate-500">
-        <span className="h-px flex-1 bg-slate-200" />
-        or pick from the list
-        <span className="h-px flex-1 bg-slate-200" />
-      </div>
-
-      <div className="flex gap-3">
-        <select
-          value={service}
-          onChange={(e) => setService(e.target.value)}
-          className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-slate-900"
-        >
-          <option value="">Select a service (optional)</option>
-          {SERVICE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-slate-900"
-        >
-          <option value="">Select a city (optional)</option>
-          {CITY_OPTIONS.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      </div>
-
       <button
         type="submit"
-        disabled={isLoading || (!text.trim() && !service)}
+        disabled={isLoading || !text.trim()}
         className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isLoading ? 'Searching…' : 'Search'}
