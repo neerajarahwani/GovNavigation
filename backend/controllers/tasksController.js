@@ -84,6 +84,11 @@ function toStepResponse(s) {
     canRunParallelWith: s.canRunParallelWith,
     sourceUrl: s.sourceUrl,
     lastVerified: s.lastVerified,
+    description: s.description,
+    keyPoints: s.keyPoints,
+    govtTag: s.govtTag,
+    sourceTitle: s.sourceTitle,
+    subtitle: s.subtitle,
   };
 }
 

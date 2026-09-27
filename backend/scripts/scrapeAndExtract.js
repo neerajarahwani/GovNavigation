@@ -19,7 +19,12 @@ text, matching exactly this shape:
   "fees": "",
   "estimatedDays": null,
   "eligibility": "",
-  "prerequisites": []
+  "prerequisites": [],
+  "description": "",
+  "keyPoints": [],
+  "govtTag": "",
+  "sourceTitle": "",
+  "subtitle": ""
 }`;
 
 async function scrapeUrl(url) {

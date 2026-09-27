@@ -14,6 +14,11 @@ const EDITABLE_STEP_FIELDS = [
   'sourceUrl',
   'dependsOn',
   'canRunParallelWith',
+  'description',
+  'keyPoints',
+  'govtTag',
+  'sourceTitle',
+  'subtitle',
 ];
 
 // Builds an update object containing only the allowed fields that were actually
