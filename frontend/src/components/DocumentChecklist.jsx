@@ -1,20 +1,26 @@
 import { useState, useMemo } from 'react'
 
-// Collects every unique document mentioned across the task's steps and lets
-// the citizen check off ones they already have — the parent page uses the
-// checked set to filter the graph, this component only tracks the checkboxes.
+// Only documents that actually match some step's name are shown here —
+// checking anything else would do nothing, and give no clue why. This keeps
+// the promise "check it off to skip that step" always true for whatever is
+// shown.
+function findSkippableDocuments(steps) {
+  const set = new Set()
+  for (const step of steps) {
+    for (const doc of step.documents || []) {
+      const matchesAStep = steps.some((s) => s.name.toLowerCase().includes(doc.toLowerCase()))
+      if (matchesAStep) set.add(doc)
+    }
+  }
+  return Array.from(set)
+}
+
 function DocumentChecklist({ steps, onChange }) {
   const [checked, setChecked] = useState(new Set())
 
-  const uniqueDocuments = useMemo(() => {
-    const set = new Set()
-    for (const step of steps) {
-      for (const doc of step.documents || []) set.add(doc)
-    }
-    return Array.from(set)
-  }, [steps])
+  const skippableDocuments = useMemo(() => findSkippableDocuments(steps), [steps])
 
-  if (uniqueDocuments.length === 0) return null
+  if (skippableDocuments.length === 0) return null
 
   function toggle(doc) {
     const next = new Set(checked)
@@ -30,7 +36,7 @@ function DocumentChecklist({ steps, onChange }) {
         Already have any of these? Check them off to skip that step.
       </p>
       <div className="flex flex-wrap gap-3">
-        {uniqueDocuments.map((doc) => (
+        {skippableDocuments.map((doc) => (
           <label key={doc} className="flex items-center gap-1 text-sm text-slate-700">
             <input type="checkbox" checked={checked.has(doc)} onChange={() => toggle(doc)} />
             {doc}
