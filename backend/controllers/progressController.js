@@ -54,7 +54,83 @@ async function getTaskProgress(req, res) {
 
   return res.status(200).json({
     success: true,
-    data: { taskId, completedSteps: progress ? progress.completedSteps : [] },
+    data: {
+      taskId,
+      completedSteps: progress ? progress.completedSteps : [],
+      bookmarked: progress ? progress.bookmarked : false,
+      ownedDocuments: progress ? progress.ownedDocuments : [],
+    },
+  });
+}
+
+// POST /api/progress/bookmark — "Save Roadmap": bookmarks a task independent of
+// step completion. A user can bookmark a task without ever marking a step done.
+async function setBookmark(req, res) {
+  const { taskId, bookmarked } = req.body || {};
+
+  if (!mongoose.isValidObjectId(taskId)) {
+    return res.status(400).json({ success: false, error: 'A valid taskId is required.' });
+  }
+  if (typeof bookmarked !== 'boolean') {
+    return res.status(400).json({ success: false, error: 'bookmarked must be true or false.' });
+  }
+
+  const task = await Task.findById(taskId);
+  if (!task) {
+    return res.status(404).json({ success: false, error: 'Task not found.' });
+  }
+
+  let progress = await Progress.findOne({ userId: req.user.id, taskId });
+  if (!progress) {
+    progress = await Progress.create({ userId: req.user.id, taskId, completedSteps: [] });
+  }
+
+  progress.bookmarked = bookmarked;
+  await progress.save();
+
+  return res.status(200).json({
+    success: true,
+    data: { taskId: progress.taskId, bookmarked: progress.bookmarked },
+  });
+}
+
+// POST /api/progress/documents — marks one document (by name, matching a
+// Step.documents entry) as owned or not-owned for a task, so the Documents
+// checklist survives a page refresh.
+async function setDocumentOwned(req, res) {
+  const { taskId, documentName, owned } = req.body || {};
+
+  if (!mongoose.isValidObjectId(taskId)) {
+    return res.status(400).json({ success: false, error: 'A valid taskId is required.' });
+  }
+  if (!documentName || typeof documentName !== 'string') {
+    return res.status(400).json({ success: false, error: 'A valid documentName is required.' });
+  }
+  if (typeof owned !== 'boolean') {
+    return res.status(400).json({ success: false, error: 'owned must be true or false.' });
+  }
+
+  const task = await Task.findById(taskId);
+  if (!task) {
+    return res.status(404).json({ success: false, error: 'Task not found.' });
+  }
+
+  let progress = await Progress.findOne({ userId: req.user.id, taskId });
+  if (!progress) {
+    progress = await Progress.create({ userId: req.user.id, taskId, completedSteps: [] });
+  }
+
+  const alreadyOwned = progress.ownedDocuments.includes(documentName);
+  if (owned && !alreadyOwned) {
+    progress.ownedDocuments.push(documentName);
+  } else if (!owned && alreadyOwned) {
+    progress.ownedDocuments = progress.ownedDocuments.filter((d) => d !== documentName);
+  }
+  await progress.save();
+
+  return res.status(200).json({
+    success: true,
+    data: { taskId: progress.taskId, ownedDocuments: progress.ownedDocuments },
   });
 }
 
@@ -78,6 +154,7 @@ async function listProgress(req, res) {
         city: task.city,
         completedCount: p.completedSteps.length,
         totalSteps: task.steps.length,
+        bookmarked: p.bookmarked,
       };
     })
     .filter(Boolean);
@@ -85,4 +162,4 @@ async function listProgress(req, res) {
   return res.status(200).json({ success: true, data });
 }
 
-module.exports = { markStep, getTaskProgress, listProgress };
+module.exports = { markStep, getTaskProgress, listProgress, setBookmark, setDocumentOwned };
