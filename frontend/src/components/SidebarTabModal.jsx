@@ -27,7 +27,11 @@ function SidebarTabModal({
   ownedDocuments = [],
   onToggleDocumentOwned,
 }) {
-  if (!activeTab || activeTab === 'Roadmap') return null
+  // 'home', 'Roadmap', 'Roadmaps' and 'Saved' are handled elsewhere (Home
+  // just closes any modal; My Roadmaps/Saved open SavedRoadmapsModal) — this
+  // modal only knows about the task-detail tabs below.
+  const HANDLED_TABS = ['Overview', 'Documents', 'Forms', 'Fees', 'Departments', 'Official Sources', 'Help']
+  if (!HANDLED_TABS.includes(activeTab)) return null
 
   const documents = collectTaskDocuments(steps)
   const ownedSet = new Set(ownedDocuments)
