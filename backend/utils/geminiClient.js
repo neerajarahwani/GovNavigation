@@ -1,11 +1,9 @@
 // Shared helper for calling Gemini. Any code that needs an AI call should use this
 // instead of writing its own fetch call, so there's one place to fix/change things.
-// TEMPORARY: gemini-3.5-flash-lite (the project's normal choice, for its higher
-// free-tier quota) is currently hanging on every generateContent call — looks
-// like a Google-side outage for that model, confirmed by gemini-3.8-flash
-// working fine on the same key. Switch back to gemini-3.5-flash-lite once that
-// recovers; 3.8-flash uses more of the free quota per request.
-const MODEL = 'gemini-3.8-flash';
+// Using the "lite" model on purpose — it has a much higher free-tier daily quota
+// than the newer flagship models (gemini-3.8-flash's free tier is capped at just
+// 20 requests/day, which is exhausted in minutes of normal testing).
+const MODEL = 'gemini-3.5-flash-lite';
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -14,10 +12,7 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // since that's a transient issue on Google's side, not a real failure. Throws on any
 // other failure (network, bad key, bad response) — callers decide how to handle that
 // (e.g. return a clean error to the client instead of crashing).
-// gemini-3.8-flash (temporary substitute, see MODEL comment above) uses
-// chain-of-thought "thinking" tokens even for simple prompts, so its latency
-// is noticeably more variable than the lite model — give it more headroom.
-const REQUEST_TIMEOUT_MS = 35000;
+const REQUEST_TIMEOUT_MS = 20000;
 
 async function askGemini(systemInstruction, userText, { asJson = false } = {}) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${process.env.GOOGLE_API_KEY}`;

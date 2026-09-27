@@ -1,17 +1,39 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Home, BookOpen, Bookmark, HelpCircle, ChevronDown, Shield, LogOut } from 'lucide-react'
+import NotificationBell from './NotificationBell'
 
-function Header({ activeTab = 'home', onTabChange }) {
+function Header({ activeTab = 'home', onTabChange, taskId }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [showDropdown, setShowDropdown] = useState(false)
+  const userMenuRef = useRef(null)
+
+  useEffect(() => {
+    if (!showDropdown) return
+    function handleClickOutside(e) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setShowDropdown(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showDropdown])
 
   function handleLogout() {
     setShowDropdown(false)
     logout()
     navigate('/login')
+  }
+
+  // On the home page, onTabChange opens the right modal in place. On any
+  // other page (Login, Signup, Admin) there's no such handler, so instead
+  // navigate to home and tell it which tab to open once it mounts.
+  function handleTabClick(tab) {
+    if (onTabChange) {
+      onTabChange(tab)
+      return
+    }
+    navigate('/', { state: tab === 'home' ? undefined : { openTab: tab } })
   }
 
   return (
@@ -39,7 +61,7 @@ function Header({ activeTab = 'home', onTabChange }) {
         <nav className="hidden md:flex items-center gap-1 bg-[#F4EFE6] p-1 rounded-xl border border-[#EBE1D3]">
           <button
             type="button"
-            onClick={() => onTabChange && onTabChange('home')}
+            onClick={() => handleTabClick('home')}
             className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition ${
               activeTab === 'home'
                 ? 'bg-[#FAF7F2] text-[#C84B24] border border-[#E5D9C8] shadow-2xs'
@@ -52,7 +74,7 @@ function Header({ activeTab = 'home', onTabChange }) {
 
           <button
             type="button"
-            onClick={() => onTabChange && onTabChange('Roadmaps')}
+            onClick={() => handleTabClick('Roadmaps')}
             className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition ${
               activeTab === 'Roadmaps'
                 ? 'bg-[#FAF7F2] text-[#C84B24] border border-[#E5D9C8] shadow-2xs'
@@ -65,7 +87,7 @@ function Header({ activeTab = 'home', onTabChange }) {
 
           <button
             type="button"
-            onClick={() => onTabChange && onTabChange('Saved')}
+            onClick={() => handleTabClick('Saved')}
             className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition ${
               activeTab === 'Saved'
                 ? 'bg-[#FAF7F2] text-[#C84B24] border border-[#E5D9C8] shadow-2xs'
@@ -78,7 +100,7 @@ function Header({ activeTab = 'home', onTabChange }) {
 
           <button
             type="button"
-            onClick={() => onTabChange && onTabChange('Help')}
+            onClick={() => handleTabClick('Help')}
             className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition ${
               activeTab === 'Help'
                 ? 'bg-[#FAF7F2] text-[#C84B24] border border-[#E5D9C8] shadow-2xs'
@@ -90,8 +112,9 @@ function Header({ activeTab = 'home', onTabChange }) {
           </button>
         </nav>
 
-        {/* Right: User Profile Menu or Sign In / Register Buttons */}
+        {/* Right: Notifications + User Profile Menu or Sign In / Register Buttons */}
         <div className="relative flex items-center gap-3">
+          <NotificationBell taskId={taskId} />
           {user ? (
             <>
               {user.role === 'admin' && (
@@ -104,6 +127,7 @@ function Header({ activeTab = 'home', onTabChange }) {
                 </Link>
               )}
 
+              <div className="relative" ref={userMenuRef}>
               <div
                 onClick={() => setShowDropdown(!showDropdown)}
                 className="flex items-center gap-2.5 cursor-pointer rounded-xl p-1 hover:bg-[#F3EBE0] transition select-none"
@@ -118,9 +142,9 @@ function Header({ activeTab = 'home', onTabChange }) {
                         .toUpperCase()
                     : 'CP'}
                 </div>
-                <span className="text-xs font-bold text-[#1E293B] hidden sm:inline flex items-center gap-1">
+                <span className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-[#1E293B] whitespace-nowrap">
                   {user.name || 'User'}
-                  <ChevronDown className="h-3.5 w-3.5 text-[#64748B]" />
+                  <ChevronDown className="h-3.5 w-3.5 text-[#64748B] shrink-0" />
                 </span>
               </div>
 
@@ -134,7 +158,7 @@ function Header({ activeTab = 'home', onTabChange }) {
                     type="button"
                     onClick={() => {
                       setShowDropdown(false)
-                      onTabChange && onTabChange('Saved')
+                      handleTabClick('Saved')
                     }}
                     className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-[#1E293B] hover:bg-[#FAF7F2] transition"
                   >
@@ -151,6 +175,7 @@ function Header({ activeTab = 'home', onTabChange }) {
                   </button>
                 </div>
               )}
+              </div>
             </>
           ) : (
             <div className="flex items-center gap-2">

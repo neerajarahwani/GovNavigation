@@ -1,5 +1,17 @@
 import { useState, useEffect } from 'react'
-import { CheckCircle, Save, ShieldCheck, Clock, Building, DollarSign } from 'lucide-react'
+import { CheckCircle, Save, ShieldCheck, Clock, Building, DollarSign, Plus, X } from 'lucide-react'
+
+// Must match backend's fixed tag list (backend/scripts/migrateDocumentTags.js).
+const DOCUMENT_TAGS = [
+  'Identity Proof',
+  'Address Proof',
+  'Date of Birth Proof',
+  'Photograph',
+  'Business/Registration Document',
+  'Financial Document',
+  'Acknowledgement/Receipt',
+  'Other',
+]
 
 function AdminStepEditForm({ step, onSave, onVerify }) {
   const [form, setForm] = useState(step)
@@ -26,11 +38,29 @@ function AdminStepEditForm({ step, onSave, onVerify }) {
       estimatedDays: form.estimatedDays === '' ? null : Number(form.estimatedDays),
       eligibility: form.eligibility,
       sourceUrl: form.sourceUrl,
-      documents: splitList(form.documents),
+      documents: (form.documents || [])
+        .filter((d) => d.name && d.name.trim())
+        .map((d) => ({ name: d.name.trim(), tag: d.tag || 'Other' })),
       prerequisites: splitList(form.prerequisites),
     })
     if (!response.success) setErrorMessage(response.error || 'Something went wrong.')
     setIsSaving(false)
+  }
+
+  function setDocumentField(index, field, value) {
+    setForm((prev) => {
+      const documents = [...(prev.documents || [])]
+      documents[index] = { ...documents[index], [field]: value }
+      return { ...prev, documents }
+    })
+  }
+
+  function addDocument() {
+    setForm((prev) => ({ ...prev, documents: [...(prev.documents || []), { name: '', tag: 'Other' }] }))
+  }
+
+  function removeDocument(index) {
+    setForm((prev) => ({ ...prev, documents: (prev.documents || []).filter((_, i) => i !== index) }))
   }
 
   async function handleVerify() {
@@ -45,7 +75,7 @@ function AdminStepEditForm({ step, onSave, onVerify }) {
     setIsVerifying(false)
   }
 
-  const documentsText = Array.isArray(form.documents) ? form.documents.join(', ') : form.documents
+  const documents = Array.isArray(form.documents) ? form.documents : []
   const prerequisitesText = Array.isArray(form.prerequisites)
     ? form.prerequisites.join(', ')
     : form.prerequisites
@@ -130,15 +160,47 @@ function AdminStepEditForm({ step, onSave, onVerify }) {
           />
         </div>
 
-        <div className="sm:col-span-2">
+        <div className="sm:col-span-2 space-y-2">
           <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1E293B] mb-1">
-            Required Documents (comma-separated)
+            Required Documents
           </label>
-          <input
-            value={documentsText || ''}
-            onChange={(e) => setField('documents', e.target.value)}
-            className="w-full rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] px-3 py-2 text-xs text-[#1E293B] focus:bg-white focus:border-[#C84B24] focus:ring-2 focus:ring-[#C84B24]/10 focus:outline-none font-medium"
-          />
+          {documents.map((doc, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <input
+                value={doc.name || ''}
+                onChange={(e) => setDocumentField(i, 'name', e.target.value)}
+                placeholder="Document name"
+                className="flex-1 rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] px-3 py-2 text-xs text-[#1E293B] focus:bg-white focus:border-[#C84B24] focus:ring-2 focus:ring-[#C84B24]/10 focus:outline-none font-medium"
+              />
+              <select
+                value={doc.tag || 'Other'}
+                onChange={(e) => setDocumentField(i, 'tag', e.target.value)}
+                className="rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] px-2 py-2 text-xs text-[#1E293B] focus:bg-white focus:border-[#C84B24] focus:outline-none font-medium"
+              >
+                {DOCUMENT_TAGS.map((tag) => (
+                  <option key={tag} value={tag}>
+                    {tag}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => removeDocument(i)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#E5D9C8] text-[#64748B] hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition"
+                title="Remove document"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addDocument}
+            className="flex items-center gap-1.5 rounded-lg border border-dashed border-[#E5D9C8] px-3 py-1.5 text-[11px] font-bold text-[#C84B24] hover:bg-[#FFF4F0] transition"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>Add Document</span>
+          </button>
         </div>
 
         <div className="sm:col-span-2">

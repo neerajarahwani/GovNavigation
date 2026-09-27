@@ -44,6 +44,8 @@ function AdminAnnouncementsPanel({ token, tasks }) {
     if (response.success) refresh()
   }
 
+  const taskTitleById = new Map(tasks.map((t) => [String(t.taskId), t.title]))
+
   return (
     <div className="rounded-2xl border border-[#E5D9C8] bg-white p-6 shadow-civic-sm space-y-5">
       <div className="flex items-center gap-2 border-b border-[#F0E6D8] pb-3">
@@ -109,7 +111,9 @@ function AdminAnnouncementsPanel({ token, tasks }) {
                   <span className="font-bold text-[#1E293B]">{a.title}</span>
                   <p className="text-[#64748B] text-[11px] font-medium">{a.body}</p>
                   <span className="mt-1 text-[10px] font-bold text-[#8C5815] bg-[#FFF8EC] border border-[#F5E6CD] w-fit px-2 py-0.5 rounded-md">
-                    {a.relatedTaskId ? `Task: ${a.relatedTaskId}` : 'Global Broadcast'} ·{' '}
+                    {a.relatedTaskId
+                      ? `Task: ${taskTitleById.get(String(a.relatedTaskId)) || a.relatedTaskId}`
+                      : 'Global Broadcast'} ·{' '}
                     {a.isActive ? 'Status: Active' : 'Status: Inactive'}
                   </span>
                 </div>

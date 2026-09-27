@@ -177,7 +177,7 @@ function RoadmapGraph({
   const getStepIcon = (step, status, isLast) => {
     if (status === 'completed') {
       return (
-        <div className="h-7 w-7 rounded-full bg-[#166534] text-white flex items-center justify-center shrink-0 shadow-2xs">
+        <div className="h-6 w-6 rounded-full bg-[#166534] text-white flex items-center justify-center shrink-0 shadow-2xs">
           <Check className="h-4 w-4 stroke-[3]" />
         </div>
       )
@@ -190,7 +190,7 @@ function RoadmapGraph({
     ) {
       return (
         <div
-          className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 border transition-colors"
+          className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 border transition-colors"
           style={
             status === 'active'
               ? { backgroundColor: palette.primary, color: '#FFFFFF', borderColor: palette.primary }
@@ -205,7 +205,7 @@ function RoadmapGraph({
     if (isLast || step.name.toLowerCase().includes('start operations')) {
       return (
         <div
-          className="h-7 w-7 rounded-lg bg-[#FAF7F2] border border-[#EBE1D3] flex items-center justify-center shrink-0"
+          className="h-6 w-6 rounded-lg bg-[#FAF7F2] border border-[#EBE1D3] flex items-center justify-center shrink-0"
           style={{ color: palette.primary }}
         >
           <Flag className="h-4 w-4 fill-current" />
@@ -215,7 +215,7 @@ function RoadmapGraph({
 
     return (
       <div
-        className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 border transition-colors"
+        className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 border transition-colors"
         style={
           status === 'active'
             ? { backgroundColor: palette.primary, color: '#FFFFFF', borderColor: palette.primary }
@@ -260,31 +260,31 @@ function RoadmapGraph({
         key={step.stepId}
         onClick={() => onStepSelect(step)}
         style={style}
-        className="relative cursor-pointer rounded-xl border p-3.5 transition-all duration-200"
+        className="relative cursor-pointer rounded-xl border p-2.5 transition-all duration-200"
       >
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
             {getStepIcon(step, status, isLast)}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="text-sm font-bold text-[#1E293B] truncate">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h4 className="text-xs font-bold text-[#1E293B] truncate">
                   {step.name}
                 </h4>
                 {status === 'active' && (
                   <span
-                    className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-2xs"
+                    className="rounded-full px-1.5 py-0.5 text-[9px] font-bold text-white shadow-2xs"
                     style={{ backgroundColor: palette.badgeBg }}
                   >
                     Current Step
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#64748B] truncate mt-0.5 font-medium">
+              <p className="text-[11px] text-[#64748B] truncate mt-0.5 font-medium">
                 {step.subtitle || step.department || 'Understand requirements & complete procedures'}
               </p>
             </div>
           </div>
-          <ChevronRight className="h-5 w-5 text-[#94A3B8] shrink-0" />
+          <ChevronRight className="h-4 w-4 text-[#94A3B8] shrink-0" />
         </div>
       </div>
     )
@@ -390,7 +390,7 @@ function RoadmapGraph({
 
       {/* FLOW VIEW DIAGRAM */}
       {viewMode === 'flow' && (
-        <div className="flex flex-col items-center w-full max-w-xl mx-auto py-2 space-y-2">
+        <div id="roadmap-graph-capture" className="flex flex-col items-center w-full max-w-xl mx-auto py-2 space-y-2">
           {stepNodes.map((node, nodeIdx) => {
             const isLastNode = nodeIdx === stepNodes.length - 1
             const isParallelGroup = node.steps.length > 1

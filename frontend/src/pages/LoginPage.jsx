@@ -15,13 +15,12 @@ function LoginPage() {
   const { login: setAuthUser } = useAuth()
   const navigate = useNavigate()
 
-  async function handleSubmit(e) {
-    e.preventDefault()
+  async function performLogin(loginEmail, loginPassword) {
     setError(null)
     setIsLoading(true)
 
     try {
-      const res = await loginApi(email, password)
+      const res = await loginApi(loginEmail, loginPassword)
       if (res.success && res.data) {
         setAuthUser(res.data.token, res.data.user)
         navigate('/')
@@ -35,9 +34,18 @@ function LoginPage() {
     }
   }
 
-  function handleDemoFill(demoEmail, demoPassword) {
+  function handleSubmit(e) {
+    e.preventDefault()
+    performLogin(email, password)
+  }
+
+  // Quick-fill demo buttons log in immediately rather than just filling the
+  // fields — otherwise it's ambiguous whether clicking "Admin Demo" actually
+  // logged you in as admin or just filled the form.
+  function handleDemoLogin(demoEmail, demoPassword) {
     setEmail(demoEmail)
     setPassword(demoPassword)
+    performLogin(demoEmail, demoPassword)
   }
 
   return (
@@ -135,7 +143,7 @@ function LoginPage() {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => handleDemoFill('citizen@example.com', 'Password123!')}
+                  onClick={() => handleDemoLogin('citizen@example.com', 'Password123!')}
                   className="flex items-center justify-center gap-1.5 rounded-lg border border-[#EBE1D3] bg-[#FAF7F2] py-1.5 px-2 text-[11px] font-semibold text-[#1E293B] hover:border-[#C84B24] hover:bg-[#FFF4F0] hover:text-[#C84B24] transition"
                 >
                   <User className="h-3 w-3 text-[#C84B24]" />
@@ -143,7 +151,7 @@ function LoginPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDemoFill('admin@civicpath.gov', 'AdminPassword123!')}
+                  onClick={() => handleDemoLogin('admin@civicpath.gov', 'AdminPassword123!')}
                   className="flex items-center justify-center gap-1.5 rounded-lg border border-[#F5E6CD] bg-[#FFF8EC] py-1.5 px-2 text-[11px] font-semibold text-[#8C5815] hover:bg-[#FFEFCB] transition"
                 >
                   <span className="h-2 w-2 rounded-full bg-[#D97706]" />

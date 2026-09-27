@@ -185,6 +185,7 @@ async function query(req, res) {
     const raw = await askGemini(EXTRACT_PROMPT, text, { asJson: true });
     extracted = JSON.parse(raw);
   } catch (err) {
+    console.error('tasksController.query: Gemini extraction failed:', err.message);
     return res.status(502).json({ success: false, error: 'Could not process your request right now — please try again.' });
   }
 

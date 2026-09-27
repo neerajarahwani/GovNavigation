@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import Header from '../components/Header'
 import TaskInputForm from '../components/TaskInputForm'
@@ -8,11 +8,9 @@ import RoadmapGraph from '../components/RoadmapGraph'
 import StepDetailPanel from '../components/StepDetailPanel'
 import SidebarTabModal from '../components/SidebarTabModal'
 import SavedRoadmapsModal from '../components/SavedRoadmapsModal'
-import AnnouncementBanner from '../components/AnnouncementBanner'
 import { queryTask, fetchTaskById } from '../api/tasksApi'
 import { useAuth } from '../context/AuthContext'
 import { getTaskProgress, listProgress, markStep, setBookmark, setDocumentOwned } from '../api/progressApi'
-import { getAnnouncements } from '../api/announcementsApi'
 
 // A real task id is a Mongo ObjectId; the pre-search placeholder roadmap
 // below uses a fake one, so actions that hit the backend (bookmark, mark
@@ -56,12 +54,13 @@ function formatTaskData(data, fallbackText, fallbackCity) {
 
 function TaskInputPage() {
   const { user, token } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
   const [taskData, setTaskData] = useState(null)
   const [selectedStep, setSelectedStep] = useState(null)
   const [completedStepIds, setCompletedStepIds] = useState([])
   const [ownedDocuments, setOwnedDocuments] = useState([])
   const [bookmarked, setBookmarked] = useState(false)
-  const [announcements, setAnnouncements] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [saveToast, setSaveToast] = useState(null)
@@ -73,9 +72,23 @@ function TaskInputPage() {
 
   const isRealTask = !!taskData && isRealTaskId(taskData.taskId)
 
+  // Header's My Roadmaps/Saved/Help buttons, when clicked from a different
+  // page (Login, Signup, Admin), navigate here with { openTab } in route
+  // state since there's no in-page modal handler on those pages. Open that
+  // tab once, then clear the state so it doesn't reopen on a later visit.
+  useEffect(() => {
+    const openTab = location.state?.openTab
+    if (openTab) {
+      handleHeaderTabChange(openTab)
+      navigate(location.pathname, { replace: true, state: null })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state])
+
   // Applies a formatted task to page state and loads the logged-in user's
-  // saved progress + any active announcements for it. Shared by a fresh
-  // search and by opening a previously saved roadmap.
+  // saved progress for it. Shared by a fresh search and by opening a
+  // previously saved roadmap. Announcements for this task show up in the
+  // navbar's notification bell (see Header's taskId prop below).
   async function applyTaskData(formattedTask) {
     setTaskData(formattedTask)
     setSelectedStep(formattedTask.steps[0])
@@ -91,9 +104,6 @@ function TaskInputPage() {
         setBookmarked(!!progressRes.data.bookmarked)
       }
     }
-
-    const announcementsRes = await getAnnouncements(formattedTask.taskId)
-    setAnnouncements(announcementsRes.success ? announcementsRes.data || [] : [])
   }
 
   // Handle Form Submission
@@ -242,10 +252,23 @@ function TaskInputPage() {
   return (
     <div className="min-h-screen bg-[#FAF7F2] text-[#1E293B] relative overflow-hidden font-['Plus_Jakarta_Sans',sans-serif]">
       {/* Sticky Top Bar */}
-      <Header activeTab={activeModalTab || 'home'} onTabChange={handleHeaderTabChange} />
+      <Header
+        activeTab={activeModalTab || 'home'}
+        onTabChange={handleHeaderTabChange}
+        taskId={isRealTask ? taskData.taskId : undefined}
+      />
+
+      {/* Hero Search Section — full width, flush against the header, not
+          constrained by <main>'s max-w-7xl/padding */}
+      <TaskInputForm
+        onSubmit={handleFormSubmit}
+        isLoading={isLoading}
+        currentQuery={taskData?.name || ''}
+        currentCity={taskData?.city || ''}
+      />
 
       {/* Main Container */}
-      <main className="mx-auto flex max-w-7xl flex-col items-center gap-8 px-4 sm:px-6 pt-6 pb-20">
+      <main className="mx-auto flex max-w-7xl flex-col items-center gap-5 px-4 sm:px-6 pt-5 pb-10">
         {/* Toast Notification */}
         {saveToast && (
           <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-[#1E293B] text-white px-4 py-3 text-xs font-bold shadow-xl animate-bounce">
@@ -290,19 +313,6 @@ function TaskInputPage() {
           loggedIn={!!token}
         />
 
-        {/* Hero Search Section */}
-        <TaskInputForm
-          onSubmit={handleFormSubmit}
-          isLoading={isLoading}
-          currentQuery={taskData?.name || ''}
-          currentCity={taskData?.city || ''}
-        />
-
-        {/* Announcements for this task */}
-        {announcements.map((a) => (
-          <AnnouncementBanner key={a._id} text={a.body} />
-        ))}
-
         {/* Error Alert */}
         {error && (
           <div className="w-full max-w-2xl rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-bold text-red-700 text-center">
@@ -337,6 +347,7 @@ function TaskInputPage() {
                 onTabChange={setActiveModalTab}
                 onSaveRoadmap={handleSaveRoadmap}
                 bookmarked={bookmarked}
+                steps={taskData.steps}
               />
             </div>
 

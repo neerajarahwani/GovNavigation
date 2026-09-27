@@ -41,37 +41,39 @@ function StepDetailPanel({
   const sourceUrl = step.sourceUrl || 'https://www.mca.gov.in/'
 
   return (
-    <div className="w-full rounded-2xl bg-white p-5 shadow-civic-sm border border-[#E5D9C8] flex flex-col justify-between space-y-5">
-      <div>
-        {/* Top Header & Pagination Controls */}
-        <div className="flex items-center justify-between border-b border-[#F0E6D8] pb-3 mb-4">
-          <span className="text-xs font-semibold text-[#64748B]">
-            Step {displayIndex} of {total}
-          </span>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={onPrevStep}
-              disabled={displayIndex <= 1}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#EBE1D3] bg-[#FAF7F2] text-[#1E293B] hover:bg-[#F3EBE0] disabled:opacity-30 disabled:cursor-not-allowed transition"
-              title="Previous Step"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={onNextStep}
-              disabled={displayIndex >= total}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#EBE1D3] bg-[#FAF7F2] text-[#1E293B] hover:bg-[#F3EBE0] disabled:opacity-30 disabled:cursor-not-allowed transition"
-              title="Next Step"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
+    <div className="w-full rounded-2xl bg-white p-5 shadow-civic-sm border border-[#E5D9C8] flex flex-col gap-4">
+      {/* Top Header & Pagination Controls — stays fixed, doesn't scroll */}
+      <div className="flex items-center justify-between border-b border-[#F0E6D8] pb-3">
+        <span className="text-xs font-semibold text-[#64748B]">
+          Step {displayIndex} of {total}
+        </span>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onPrevStep}
+            disabled={displayIndex <= 1}
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#EBE1D3] bg-[#FAF7F2] text-[#1E293B] hover:bg-[#F3EBE0] disabled:opacity-30 disabled:cursor-not-allowed transition"
+            title="Previous Step"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onNextStep}
+            disabled={displayIndex >= total}
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#EBE1D3] bg-[#FAF7F2] text-[#1E293B] hover:bg-[#F3EBE0] disabled:opacity-30 disabled:cursor-not-allowed transition"
+            title="Next Step"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
+      </div>
 
+      {/* Scrollable content — bounded height so a long real-world description
+          doesn't stretch the whole page; only this area scrolls. */}
+      <div className="max-h-[52vh] overflow-y-auto pr-1 -mr-1 space-y-4">
         {/* Step Title & Subtitle */}
-        <div className="mb-4">
+        <div>
           <h3 className="text-xl font-serif-title font-bold text-[#1E293B] tracking-tight">
             {title}
           </h3>
@@ -81,7 +83,7 @@ function StepDetailPanel({
         </div>
 
         {/* Card Section 1: Key Points (Tan Highlight Box) */}
-        <div className="rounded-xl border border-[#F5E6CD] bg-[#FFF8EC] p-3.5 mb-4">
+        <div className="rounded-xl border border-[#F5E6CD] bg-[#FFF8EC] p-3.5">
           <div className="flex items-center gap-2 font-bold text-xs text-[#8C5815] mb-2">
             <Lightbulb className="h-4 w-4 text-[#D97706] fill-[#FBBF24]/30" />
             <span>Key Points</span>
@@ -97,7 +99,7 @@ function StepDetailPanel({
         </div>
 
         {/* Card Section 2: Documents Required */}
-        <div className="mb-4 space-y-2">
+        <div className="space-y-2">
           <div className="flex items-center gap-2 font-bold text-xs text-[#1E293B]">
             <FileText className="h-4 w-4 text-[#C84B24]" />
             <span>Documents Required</span>
@@ -124,7 +126,7 @@ function StepDetailPanel({
         </div>
 
         {/* Card Section 3: Relevant Department */}
-        <div className="mb-4 space-y-1">
+        <div className="space-y-1">
           <div className="flex items-center gap-2 font-bold text-xs text-[#1E293B]">
             <Landmark className="h-4 w-4 text-[#C84B24]" />
             <span>Relevant Department</span>

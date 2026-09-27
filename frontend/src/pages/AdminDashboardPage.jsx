@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { listTasks, getTask, updateTask, updateStep, verifyStep } from '../api/adminApi'
 import Header from '../components/Header'
@@ -6,7 +7,7 @@ import AdminTaskList from '../components/AdminTaskList'
 import AdminTaskEditForm from '../components/AdminTaskEditForm'
 import AdminStepEditForm from '../components/AdminStepEditForm'
 import AdminAnnouncementsPanel from '../components/AdminAnnouncementsPanel'
-import { Shield, ShieldAlert } from 'lucide-react'
+import { Shield, ShieldAlert, ArrowLeft } from 'lucide-react'
 
 function AdminDashboardPage() {
   const { user, token } = useAuth()
@@ -93,6 +94,15 @@ function AdminDashboardPage() {
       <Header />
 
       <main className="mx-auto flex max-w-5xl flex-col gap-6 px-4 sm:px-6 py-8">
+        {/* Back to Home */}
+        <Link
+          to="/"
+          className="self-start flex items-center gap-1.5 rounded-lg border border-[#E5D9C8] bg-white px-3 py-1.5 text-xs font-bold text-[#1E293B] hover:bg-[#FAF7F2] transition"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          <span>Back to Home</span>
+        </Link>
+
         {/* Page Title Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F0E6D8] pb-5">
           <div className="flex items-center gap-3">

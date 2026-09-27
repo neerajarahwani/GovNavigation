@@ -9,6 +9,7 @@ import {
   Link2,
   Bookmark
 } from 'lucide-react'
+import ExportPdfButton from './ExportPdfButton'
 
 function BusinessNavSidebar({
   title = 'Business Registration',
@@ -19,8 +20,9 @@ function BusinessNavSidebar({
   onTabChange,
   onSaveRoadmap,
   bookmarked = false,
+  steps = [],
 }) {
-  const percentage = Math.round((completedCount / totalCount) * 100)
+  const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
 
   const NAV_ITEMS = [
     { name: 'Roadmap', icon: Map },
@@ -139,6 +141,9 @@ function BusinessNavSidebar({
           <Bookmark className={`h-4 w-4 ${bookmarked ? 'fill-[#166534]/20' : ''}`} />
           <span>{bookmarked ? 'Roadmap Saved' : 'Save Roadmap'}</span>
         </button>
+
+        {/* Export to PDF */}
+        <ExportPdfButton taskName={title} city={stateName} steps={steps} />
       </div>
     </div>
   )
