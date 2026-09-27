@@ -32,9 +32,16 @@ async function signup(req, res) {
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
   const user = await User.create({ name: name.trim(), email: normalizedEmail, passwordHash });
 
+  const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
+    expiresIn: '24h',
+  });
+
   return res.status(201).json({
     success: true,
-    data: { userId: user._id, name: user.name, email: user.email, role: user.role },
+    data: {
+      token,
+      user: { userId: user._id, name: user.name, email: user.email, role: user.role },
+    },
   });
 }
 
