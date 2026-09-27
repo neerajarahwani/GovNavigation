@@ -130,7 +130,7 @@ function LoginPage() {
                 disabled={isLoading}
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#C84B24] hover:bg-[#AF3C19] py-3 px-4 font-bold text-xs text-white shadow-md shadow-[#C84B24]/20 disabled:opacity-50 transition active:scale-[0.99]"
               >
-                {isLoading ? 'Signing in...' : 'Log In to CivicPath →'}
+                {isLoading ? 'Signing in...' : 'Log In to JanDisha →'}
               </button>
             </form>
 
@@ -151,7 +151,7 @@ function LoginPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDemoLogin('admin@civicpath.gov', 'AdminPassword123!')}
+                  onClick={() => handleDemoLogin('admin@jandisha.gov', 'AdminPassword123!')}
                   className="flex items-center justify-center gap-1.5 rounded-lg border border-[#F5E6CD] bg-[#FFF8EC] py-1.5 px-2 text-[11px] font-semibold text-[#8C5815] hover:bg-[#FFEFCB] transition"
                 >
                   <span className="h-2 w-2 rounded-full bg-[#D97706]" />
@@ -173,7 +173,7 @@ function LoginPage() {
       </main>
 
       <footer className="py-4 text-center text-xs font-semibold text-[#64748B] border-t border-[#EAE0D0] bg-[#FAF7F2]">
-        CivicPath © 2026 — Secure Citizen Authentication
+        JanDisha © 2026 — Secure Citizen Authentication
       </footer>
     </div>
   )

@@ -302,7 +302,7 @@ function SidebarTabModal({
             <div className="rounded-xl border border-[#E5D9C8] bg-[#FAF7F2] p-4 space-y-2">
               <h4 className="font-bold text-[#1E293B] text-sm flex items-center gap-2">
                 <HelpCircle className="h-4 w-4 text-[#C84B24]" />
-                How to use CivicPath
+                How to use JanDisha
               </h4>
               <ul className="space-y-2 text-[#475569] leading-relaxed">
                 <li>• <strong>Flow View:</strong> Visualizes step-by-step parallel branches, based on which steps can be done at the same time.</li>

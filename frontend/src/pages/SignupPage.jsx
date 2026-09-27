@@ -62,7 +62,7 @@ function SignupPage() {
                 Create Account
               </h1>
               <p className="text-xs text-[#64748B] font-medium">
-                Join CivicPath to track roadmap progress & save custom processes
+                Join JanDisha to track roadmap progress & save custom processes
               </p>
             </div>
 
@@ -162,7 +162,7 @@ function SignupPage() {
       </main>
 
       <footer className="py-4 text-center text-xs font-semibold text-[#64748B] border-t border-[#EAE0D0] bg-[#FAF7F2]">
-        CivicPath © 2026 — Secure Citizen Authentication
+        JanDisha © 2026 — Secure Citizen Authentication
       </footer>
     </div>
   )

@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react'
 import { MapPin, Phone, Star, ShieldCheck, Clock, Tag, ExternalLink, Check, Building2 } from 'lucide-react'
 import agentsData from '../data/nearbyAgents.json'
 
-function NearbyAgentsList({ currentCity = 'Maharashtra' }) {
+function NearbyAgentsList({ currentCity = 'Maharashtra', isCompact = false }) {
   const availableRegions = [
-    { label: 'Maharashtra (Mumbai, Pune, Thane)', key: 'maharashtra' },
-    { label: 'Delhi NCR (Central, South, East Delhi)', key: 'delhi' },
-    { label: 'Karnataka (Bangalore Urban & South)', key: 'karnataka' },
-    { label: 'Tamil Nadu (Chennai Central & South)', key: 'tamil nadu' },
-    { label: 'Gujarat (Ahmedabad, Surat)', key: 'gujarat' },
+    { label: isCompact ? 'Maharashtra' : 'Maharashtra (Mumbai, Pune, Thane)', key: 'maharashtra' },
+    { label: isCompact ? 'Delhi NCR' : 'Delhi NCR (Central, South, East Delhi)', key: 'delhi' },
+    { label: isCompact ? 'Karnataka' : 'Karnataka (Bangalore Urban & South)', key: 'karnataka' },
+    { label: isCompact ? 'Tamil Nadu' : 'Tamil Nadu (Chennai Central & South)', key: 'tamil nadu' },
+    { label: isCompact ? 'Gujarat' : 'Gujarat (Ahmedabad, Surat)', key: 'gujarat' },
   ]
 
   const rawInput = (currentCity || '').toLowerCase()
@@ -30,6 +30,81 @@ function NearbyAgentsList({ currentCity = 'Maharashtra' }) {
     navigator.clipboard.writeText(phone)
     setCopiedId(agentId)
     setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  if (isCompact) {
+    return (
+      <div className="w-full space-y-2.5 font-['Plus_Jakarta_Sans',sans-serif] text-xs">
+        {/* Region Filter Header */}
+        <div className="flex items-center justify-between gap-1.5 rounded-xl border border-[#F5E6CD] bg-white p-2 text-xs">
+          <div className="flex items-center gap-1.5 font-bold text-[#1E293B] overflow-hidden min-w-0">
+            <MapPin className="h-3.5 w-3.5 text-[#C84B24] shrink-0" />
+            <select
+              value={selectedRegionKey}
+              onChange={(e) => setSelectedRegionKey(e.target.value)}
+              className="w-full truncate bg-transparent font-bold text-[#1E293B] focus:outline-none cursor-pointer text-xs"
+            >
+              {availableRegions.map((r) => (
+                <option key={r.key} value={r.key}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <span className="text-[10px] font-extrabold text-[#C84B24] bg-[#FFF4F0] px-2 py-0.5 rounded-full shrink-0">
+            {agents.length} Agents
+          </span>
+        </div>
+
+        {/* Compact Agent Cards */}
+        <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+          {agents.map((agent) => (
+            <div
+              key={agent.id}
+              className="rounded-xl border border-[#E5D9C8] bg-white p-2.5 space-y-1.5 shadow-2xs hover:border-[#C84B24] transition"
+            >
+              <div className="flex items-start justify-between gap-1">
+                <div>
+                  <h5 className="font-bold text-xs text-[#1E293B] leading-tight">{agent.name}</h5>
+                  <p className="text-[10px] text-[#64748B] flex items-center gap-1 mt-0.5">
+                    <MapPin className="h-2.5 w-2.5 text-[#C84B24] shrink-0" />
+                    <span className="truncate">{agent.area}</span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-0.5 bg-[#FAF7F2] border border-[#EBE1D3] px-1.5 py-0.5 rounded text-[10px] shrink-0">
+                  <Star className="h-2.5 w-2.5 text-amber-500 fill-amber-500" />
+                  <span className="font-extrabold text-[#1E293B]">{agent.rating}</span>
+                </div>
+              </div>
+
+              {/* Services tags */}
+              <div className="flex flex-wrap gap-1 pt-0.5">
+                {agent.services.slice(0, 2).map((srv, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[9px] font-semibold text-[#64748B] bg-[#FAF7F2] border border-[#E5D9C8] px-1.5 py-0.5 rounded"
+                  >
+                    {srv}
+                  </span>
+                ))}
+              </div>
+
+              {/* Call & Phone Action */}
+              <div className="flex items-center justify-between pt-1 border-t border-[#F0E6D8] text-[10px]">
+                <span className="font-bold text-[#C84B24]">{agent.pricing}</span>
+                <a
+                  href={`tel:${agent.phone.replace(/[^0-9+]/g, '')}`}
+                  className="flex items-center gap-1 rounded-lg bg-[#C84B24] hover:bg-[#AF3C19] px-2 py-1 text-[10px] font-bold text-white shadow-2xs transition"
+                >
+                  <Phone className="h-2.5 w-2.5" />
+                  <span>Call {agent.phone}</span>
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (

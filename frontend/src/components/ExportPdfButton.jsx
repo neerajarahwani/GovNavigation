@@ -39,7 +39,7 @@ function ExportPdfButton({ taskName, city, steps }) {
       doc.setTextColor(255, 255, 255)
       doc.setFontSize(18)
       doc.setFont('helvetica', 'bold')
-      doc.text('CivicPath - Government Action Plan', margin, 18)
+      doc.text('JanDisha - Government Action Plan', margin, 18)
 
       y = 36
 
@@ -133,14 +133,14 @@ function ExportPdfButton({ taskName, city, steps }) {
         doc.setFont('helvetica', 'normal')
         doc.setTextColor(148, 163, 184)
         doc.text(
-          `CivicPath Government Navigator - Page ${i} of ${totalPages}`,
+          `JanDisha Government Navigator - Page ${i} of ${totalPages}`,
           pageWidth / 2,
           pageHeight - 8,
           { align: 'center' }
         )
       }
 
-      const fileName = `CivicPath_${(taskName || 'Roadmap').replace(/\s+/g, '_')}.pdf`
+      const fileName = `JanDisha_${(taskName || 'Roadmap').replace(/\s+/g, '_')}.pdf`
       doc.save(fileName)
     } catch (err) {
       console.error('Failed to generate PDF:', err)

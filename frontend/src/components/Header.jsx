@@ -49,7 +49,7 @@ function Header({ activeTab = 'home', onTabChange, taskId }) {
           </div>
           <div className="flex flex-col">
             <span className="text-xl font-extrabold tracking-tight text-[#1E293B]">
-              Civic<span className="text-[#C84B24]">Path</span>
+              Jan<span className="text-[#C84B24]">Disha</span>
             </span>
             <span className="text-[11px] text-[#786E64] font-medium -mt-1 hidden sm:inline">
               Your Guide to Government Services

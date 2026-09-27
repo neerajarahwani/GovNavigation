@@ -384,7 +384,7 @@ function TaskInputPage() {
 
       {/* Footer */}
       <footer className="w-full border-t border-[#EAE0D0] bg-[#FAF7F2] py-6 text-center text-xs font-medium text-[#786E64]">
-        <p>CivicPath © 2026 — Your Guide to Government Services in India.</p>
+        <p>JanDisha © 2026 — Your Guide to Government Services in India.</p>
       </footer>
     </div>
   )

@@ -1,6 +1,4 @@
-import { useState } from 'react'
-import { Lightbulb, FileText, Landmark, Link as LinkIcon, ChevronLeft, ChevronRight, ExternalLink, CheckCircle2, UserCheck, MapPin, Phone, Building2 } from 'lucide-react'
-import agentsData from '../data/nearbyAgents.json'
+import { Lightbulb, FileText, Landmark, Link as LinkIcon, ChevronLeft, ChevronRight, ExternalLink, CheckCircle2 } from 'lucide-react'
 
 function StepDetailPanel({
   step,
@@ -10,23 +8,11 @@ function StepDetailPanel({
   onNextStep,
   isCompleted = false,
   onToggleComplete,
-  cityName = 'Maharashtra',
 }) {
-  const [showAgents, setShowAgents] = useState(false)
-
   if (!step) return null
 
   const displayIndex = stepIndex || 1
   const total = totalSteps || 8
-
-  const normCity = (cityName || '').toLowerCase()
-  let regionKey = 'maharashtra'
-  if (normCity.includes('delhi')) regionKey = 'delhi'
-  else if (normCity.includes('karnataka')) regionKey = 'karnataka'
-  else if (normCity.includes('tamil')) regionKey = 'tamil nadu'
-  else if (normCity.includes('gujarat')) regionKey = 'gujarat'
-
-  const regionAgents = (agentsData[regionKey] || agentsData.maharashtra).slice(0, 3)
 
   // Fallback defaults matching the exact reference image if fields are empty
   const title = step.name || 'Choose Business Structure'
@@ -137,52 +123,6 @@ function StepDetailPanel({
               )
             })}
           </ul>
-
-          {/* Nearby Facilitator / Agent Quick Callout Box */}
-          <div className="mt-2.5 rounded-xl border border-[#F5E6CD] bg-[#FFF8EC] p-3 text-xs space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 font-bold text-[#8C5815] text-[11px]">
-                <UserCheck className="h-3.5 w-3.5 text-[#D97706]" />
-                <span>Verified Documentation Agents (3 Cities)</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowAgents(!showAgents)}
-                className="text-[10px] font-bold text-[#C84B24] hover:underline"
-              >
-                {showAgents ? 'Hide Agents' : 'View Agents by City'}
-              </button>
-            </div>
-
-            {showAgents && (
-              <div className="space-y-2 pt-1.5 border-t border-[#F5E6CD]">
-                {regionAgents.map((agent) => (
-                  <div key={agent.id} className="rounded-lg border border-[#E5D9C8] bg-white p-2.5 text-[11px] space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-[#1E293B]">{agent.name}</span>
-                      <span className="font-extrabold text-[#C84B24] text-[10px] bg-[#FFF4F0] px-1.5 py-0.5 rounded border border-[#FADCD1] flex items-center gap-0.5">
-                        <Building2 className="h-2.5 w-2.5" />
-                        {agent.city}
-                      </span>
-                    </div>
-                    <p className="text-[#64748B] text-[10px] flex items-center gap-1">
-                      <MapPin className="h-3 w-3 text-[#C84B24]" /> {agent.area}
-                    </p>
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="font-bold text-[#C84B24] text-[10px]">{agent.pricing}</span>
-                      <a
-                        href={`tel:${agent.phone.replace(/[^0-9+]/g, '')}`}
-                        className="flex items-center gap-1 rounded bg-[#C84B24] text-white px-2 py-0.5 text-[10px] font-bold"
-                      >
-                        <Phone className="h-3 w-3" />
-                        <span>{agent.phone}</span>
-                      </a>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Card Section 3: Relevant Department */}
