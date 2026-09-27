@@ -7,7 +7,14 @@ const stepSchema = new mongoose.Schema(
     taskId: { type: mongoose.Schema.Types.ObjectId, ref: 'Task', required: true },
     name: { type: String, required: true },
     department: { type: String, required: true },
-    documents: [{ type: String }],
+    // Each document a citizen needs, tagged by category (e.g. "Identity Proof")
+    // so the frontend can group them in the Documents checklist.
+    documents: [
+      {
+        name: { type: String, required: true },
+        tag: { type: String, default: '' },
+      },
+    ],
     fees: { type: String },
     estimatedDays: { type: Number },
     eligibility: { type: String },

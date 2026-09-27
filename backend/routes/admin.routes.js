@@ -5,6 +5,7 @@ const {
   updateTask,
   updateStep,
   verifyStep,
+  verifyForm,
 } = require('../controllers/adminController');
 const authenticate = require('../middleware/authenticate');
 const authorize = require('../middleware/authorize');
@@ -18,5 +19,11 @@ router.get('/tasks/:taskId', authenticate, authorize('admin'), asyncHandler(getT
 router.patch('/tasks/:taskId', authenticate, authorize('admin'), asyncHandler(updateTask));
 router.patch('/steps/:stepId', authenticate, authorize('admin'), asyncHandler(updateStep));
 router.post('/steps/:stepId/verify', authenticate, authorize('admin'), asyncHandler(verifyStep));
+router.post(
+  '/tasks/:taskId/forms/:formId/verify',
+  authenticate,
+  authorize('admin'),
+  asyncHandler(verifyForm)
+);
 
 module.exports = router;

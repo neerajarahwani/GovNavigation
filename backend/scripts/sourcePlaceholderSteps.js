@@ -20,7 +20,7 @@ text, matching exactly this shape:
 {
   "name": "",
   "department": "",
-  "documents": [],
+  "documents": [{ "name": "", "tag": "" }],
   "fees": "",
   "estimatedDays": null,
   "eligibility": "",
@@ -36,7 +36,13 @@ page/step is about. "keyPoints" is a short list of the most important facts a ci
 should know. "govtTag" is the issuing authority level if stated or clearly named in the
 text (e.g. "Government of India", "Government of Maharashtra") — leave empty if not
 determinable from the text. "sourceTitle" is the page's own title/heading if present in
-the text. "subtitle" is a short (under 10 words) one-line summary of the step.`;
+the text. "subtitle" is a short (under 10 words) one-line summary of the step.
+Each entry in "documents" should have a "name" (the document exactly as named in the
+text) and a "tag" categorizing what kind of document it is, chosen from this fixed
+list: "Identity Proof", "Address Proof", "Date of Birth Proof", "Photograph",
+"Business/Registration Document", "Financial Document", "Acknowledgement/Receipt",
+"Other". Choosing a category for a real, named document is fine even though it isn't
+written in the text verbatim — but never invent a document that isn't named in the text.`;
 
 // Step name (as it currently exists) -> real official source found by search.
 const SOURCES = {

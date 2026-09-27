@@ -144,7 +144,7 @@ async function fetchById(req, res) {
   return res.status(200).json({
     success: true,
     data: {
-      task: { taskId: task._id, title: task.title, city: task.city },
+      task: { taskId: task._id, title: task.title, city: task.city, forms: task.forms },
       steps: orderedSteps.map(toStepResponse),
     },
   });
@@ -181,7 +181,7 @@ async function query(req, res) {
   return res.status(200).json({
     success: true,
     data: {
-      task: { taskId: task._id, title: task.title, city: task.city },
+      task: { taskId: task._id, title: task.title, city: task.city, forms: task.forms },
       steps: steps.map(toStepResponse),
     },
   });

@@ -16,7 +16,7 @@ text, matching exactly this shape:
 {
   "name": "",
   "department": "",
-  "documents": [],
+  "documents": [{ "name": "", "tag": "" }],
   "fees": "",
   "estimatedDays": null,
   "eligibility": "",
@@ -26,7 +26,13 @@ text, matching exactly this shape:
   "govtTag": "",
   "sourceTitle": "",
   "subtitle": ""
-}`;
+}
+Each entry in "documents" should have a "name" (the document exactly as named in the
+text) and a "tag" categorizing what kind of document it is, chosen from this fixed
+list: "Identity Proof", "Address Proof", "Date of Birth Proof", "Photograph",
+"Business/Registration Document", "Financial Document", "Acknowledgement/Receipt",
+"Other". Choosing a category for a real, named document is fine even though it isn't
+written in the text verbatim — but never invent a document that isn't named in the text.`;
 
 async function main() {
   const filePath = process.argv[2];

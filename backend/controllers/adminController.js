@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Task = require('../models/Task');
 const Step = require('../models/Step');
 
-const EDITABLE_TASK_FIELDS = ['title', 'city', 'keywords'];
+const EDITABLE_TASK_FIELDS = ['title', 'city', 'keywords', 'forms'];
 const EDITABLE_STEP_FIELDS = [
   'name',
   'department',
@@ -79,6 +79,30 @@ async function updateTask(req, res) {
   }
 
   const update = pickFields(req.body || {}, EDITABLE_TASK_FIELDS);
+
+  // Same data-integrity rule as steps — a form can never end up without a
+  // real source.
+  if (Object.prototype.hasOwnProperty.call(update, 'forms')) {
+    const allValid = (update.forms || []).every(
+      (f) =>
+        f &&
+        typeof f === 'object' &&
+        typeof f.title === 'string' &&
+        f.title.trim() &&
+        typeof f.link === 'string' &&
+        f.link.trim() &&
+        typeof f.sourceUrl === 'string' &&
+        f.sourceUrl.trim()
+    );
+    if (!allValid) {
+      return res.status(400).json({
+        success: false,
+        error: 'Each form must have a title, link, and sourceUrl.',
+      });
+    }
+    update.forms = update.forms.map((f) => ({ ...f, lastVerified: f.lastVerified || new Date() }));
+  }
+
   const task = await Task.findByIdAndUpdate(taskId, update, { new: true, runValidators: true });
   if (!task) {
     return res.status(404).json({ success: false, error: 'Task not found.' });
@@ -113,6 +137,18 @@ async function updateStep(req, res) {
     }
   }
 
+  if (Object.prototype.hasOwnProperty.call(update, 'documents')) {
+    const allValid = (update.documents || []).every(
+      (d) => d && typeof d === 'object' && typeof d.name === 'string' && d.name.trim()
+    );
+    if (!allValid) {
+      return res.status(400).json({
+        success: false,
+        error: 'documents must be a list of { name, tag } objects with a non-empty name.',
+      });
+    }
+  }
+
   const step = await Step.findByIdAndUpdate(stepId, update, { new: true, runValidators: true });
   if (!step) {
     return res.status(404).json({ success: false, error: 'Step not found.' });
@@ -140,4 +176,29 @@ async function verifyStep(req, res) {
   return res.status(200).json({ success: true, data: step });
 }
 
-module.exports = { listTasks, getTask, updateTask, updateStep, verifyStep };
+// POST /api/admin/tasks/:taskId/forms/:formId/verify — marks one of a task's
+// forms as personally checked, same pattern as verifyStep.
+async function verifyForm(req, res) {
+  const { taskId, formId } = req.params;
+  if (!mongoose.isValidObjectId(taskId) || !mongoose.isValidObjectId(formId)) {
+    return res.status(404).json({ success: false, error: 'Task or form not found.' });
+  }
+
+  const task = await Task.findById(taskId);
+  if (!task) {
+    return res.status(404).json({ success: false, error: 'Task not found.' });
+  }
+
+  const form = task.forms.id(formId);
+  if (!form) {
+    return res.status(404).json({ success: false, error: 'Form not found.' });
+  }
+
+  form.confidenceScore = 1;
+  form.lastVerified = new Date();
+  await task.save();
+
+  return res.status(200).json({ success: true, data: task });
+}
+
+module.exports = { listTasks, getTask, updateTask, updateStep, verifyStep, verifyForm };
