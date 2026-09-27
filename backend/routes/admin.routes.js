@@ -6,6 +6,7 @@ const {
   updateStep,
   verifyStep,
   verifyForm,
+  verifyDepartment,
 } = require('../controllers/adminController');
 const authenticate = require('../middleware/authenticate');
 const authorize = require('../middleware/authorize');
@@ -24,6 +25,12 @@ router.post(
   authenticate,
   authorize('admin'),
   asyncHandler(verifyForm)
+);
+router.post(
+  '/tasks/:taskId/departments/:departmentId/verify',
+  authenticate,
+  authorize('admin'),
+  asyncHandler(verifyDepartment)
 );
 
 module.exports = router;

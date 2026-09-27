@@ -92,6 +92,21 @@ function toStepResponse(s) {
   };
 }
 
+// Builds the task's fee table by reading each step's own already-sourced
+// fees — not a separately researched field, so there's nothing new to keep
+// verified: it's just a view over data the steps already carry.
+function buildFeeBreakdown(steps) {
+  return steps
+    .filter((s) => s.fees && s.fees.trim())
+    .map((s) => ({
+      service: s.name,
+      department: s.department,
+      amount: s.fees,
+      sourceUrl: s.sourceUrl,
+      lastVerified: s.lastVerified,
+    }));
+}
+
 // Puts steps in "do this before that" order: a step only appears once every step
 // listed in its dependsOn has already been placed. Safe against a bad/circular
 // dependency — anything left over after every real placement gets appended at the
@@ -144,7 +159,14 @@ async function fetchById(req, res) {
   return res.status(200).json({
     success: true,
     data: {
-      task: { taskId: task._id, title: task.title, city: task.city, forms: task.forms },
+      task: {
+        taskId: task._id,
+        title: task.title,
+        city: task.city,
+        forms: task.forms,
+        departments: task.departments,
+        feeBreakdown: buildFeeBreakdown(orderedSteps),
+      },
       steps: orderedSteps.map(toStepResponse),
     },
   });
@@ -181,7 +203,14 @@ async function query(req, res) {
   return res.status(200).json({
     success: true,
     data: {
-      task: { taskId: task._id, title: task.title, city: task.city, forms: task.forms },
+      task: {
+        taskId: task._id,
+        title: task.title,
+        city: task.city,
+        forms: task.forms,
+        departments: task.departments,
+        feeBreakdown: buildFeeBreakdown(steps),
+      },
       steps: steps.map(toStepResponse),
     },
   });

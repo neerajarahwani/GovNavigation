@@ -20,6 +20,19 @@ const taskSchema = new mongoose.Schema(
         confidenceScore: { type: Number, min: 0, max: 1, default: 1 },
       },
     ],
+    // Departments this task involves, with a real portal (and helpline where
+    // one could be confirmed directly from an official source — never a
+    // guessed or third-party-aggregator number). Same trust rule as Step.
+    departments: [
+      {
+        name: { type: String, required: true },
+        portalUrl: { type: String, required: true },
+        helpline: { type: String, default: '' },
+        sourceUrl: { type: String, required: true },
+        lastVerified: { type: Date, required: true },
+        confidenceScore: { type: Number, min: 0, max: 1, default: 1 },
+      },
+    ],
   },
   { timestamps: true }
 );

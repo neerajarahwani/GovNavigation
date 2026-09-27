@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Task = require('../models/Task');
 const Step = require('../models/Step');
 
-const EDITABLE_TASK_FIELDS = ['title', 'city', 'keywords', 'forms'];
+const EDITABLE_TASK_FIELDS = ['title', 'city', 'keywords', 'forms', 'departments'];
 const EDITABLE_STEP_FIELDS = [
   'name',
   'department',
@@ -103,6 +103,30 @@ async function updateTask(req, res) {
     update.forms = update.forms.map((f) => ({ ...f, lastVerified: f.lastVerified || new Date() }));
   }
 
+  if (Object.prototype.hasOwnProperty.call(update, 'departments')) {
+    const allValid = (update.departments || []).every(
+      (d) =>
+        d &&
+        typeof d === 'object' &&
+        typeof d.name === 'string' &&
+        d.name.trim() &&
+        typeof d.portalUrl === 'string' &&
+        d.portalUrl.trim() &&
+        typeof d.sourceUrl === 'string' &&
+        d.sourceUrl.trim()
+    );
+    if (!allValid) {
+      return res.status(400).json({
+        success: false,
+        error: 'Each department must have a name, portalUrl, and sourceUrl.',
+      });
+    }
+    update.departments = update.departments.map((d) => ({
+      ...d,
+      lastVerified: d.lastVerified || new Date(),
+    }));
+  }
+
   const task = await Task.findByIdAndUpdate(taskId, update, { new: true, runValidators: true });
   if (!task) {
     return res.status(404).json({ success: false, error: 'Task not found.' });
@@ -201,4 +225,36 @@ async function verifyForm(req, res) {
   return res.status(200).json({ success: true, data: task });
 }
 
-module.exports = { listTasks, getTask, updateTask, updateStep, verifyStep, verifyForm };
+// POST /api/admin/tasks/:taskId/departments/:departmentId/verify
+async function verifyDepartment(req, res) {
+  const { taskId, departmentId } = req.params;
+  if (!mongoose.isValidObjectId(taskId) || !mongoose.isValidObjectId(departmentId)) {
+    return res.status(404).json({ success: false, error: 'Task or department not found.' });
+  }
+
+  const task = await Task.findById(taskId);
+  if (!task) {
+    return res.status(404).json({ success: false, error: 'Task not found.' });
+  }
+
+  const department = task.departments.id(departmentId);
+  if (!department) {
+    return res.status(404).json({ success: false, error: 'Department not found.' });
+  }
+
+  department.confidenceScore = 1;
+  department.lastVerified = new Date();
+  await task.save();
+
+  return res.status(200).json({ success: true, data: task });
+}
+
+module.exports = {
+  listTasks,
+  getTask,
+  updateTask,
+  updateStep,
+  verifyStep,
+  verifyForm,
+  verifyDepartment,
+};
