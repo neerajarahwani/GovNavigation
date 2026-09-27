@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
 function authHeaders(token) {
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
@@ -29,3 +29,10 @@ export async function listProgress(token) {
   const body = await response.json()
   return { status: response.status, ...body }
 }
+
+export const getProgress = listProgress
+
+export async function setStepCompleted(taskId, stepId, completed, token) {
+  return markStep({ taskId, stepId, completed }, token)
+}
+
