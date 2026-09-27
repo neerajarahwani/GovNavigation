@@ -41,6 +41,7 @@ async function findBestMatchingTask(serviceText, cityText) {
 
   let best = null;
   let bestScore = 0;
+  let tieCount = 0;
 
   for (const task of pool) {
     // Keywords can be multi-word phrases (e.g. "birth certificate") — split each
@@ -54,8 +55,16 @@ async function findBestMatchingTask(serviceText, cityText) {
     if (score > bestScore) {
       bestScore = score;
       best = task;
+      tieCount = 1;
+    } else if (score === bestScore && score > 0) {
+      tieCount += 1;
     }
   }
+
+  // If two or more tasks tie for the best score, the match is genuinely
+  // ambiguous (usually a single generic shared word, e.g. "registration") —
+  // never guess which one the citizen meant.
+  if (tieCount > 1) return null;
 
   return bestScore > 0 ? best : null;
 }
