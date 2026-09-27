@@ -36,3 +36,23 @@ export async function setStepCompleted(taskId, stepId, completed, token) {
   return markStep({ taskId, stepId, completed }, token)
 }
 
+export async function setBookmark(taskId, bookmarked, token) {
+  const response = await fetch(`${BASE_URL}/api/progress/bookmark`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({ taskId, bookmarked }),
+  })
+  const body = await response.json()
+  return { status: response.status, ...body }
+}
+
+export async function setDocumentOwned(taskId, documentName, owned, token) {
+  const response = await fetch(`${BASE_URL}/api/progress/documents`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({ taskId, documentName, owned }),
+  })
+  const body = await response.json()
+  return { status: response.status, ...body }
+}
+

@@ -18,6 +18,7 @@ function BusinessNavSidebar({
   activeTab = 'Roadmap',
   onTabChange,
   onSaveRoadmap,
+  bookmarked = false,
 }) {
   const percentage = Math.round((completedCount / totalCount) * 100)
 
@@ -129,10 +130,14 @@ function BusinessNavSidebar({
         <button
           type="button"
           onClick={onSaveRoadmap}
-          className="flex items-center justify-center gap-2 rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] hover:bg-[#FAF7F2] py-2.5 px-3 text-xs font-bold text-[#C84B24] transition shadow-2xs"
+          className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 px-3 text-xs font-bold transition shadow-2xs ${
+            bookmarked
+              ? 'border-[#166534] bg-[#F0FDF4] text-[#166534]'
+              : 'border-[#E5D9C8] bg-[#FFFDF9] hover:bg-[#FAF7F2] text-[#C84B24]'
+          }`}
         >
-          <Bookmark className="h-4 w-4" />
-          <span>Save Roadmap</span>
+          <Bookmark className={`h-4 w-4 ${bookmarked ? 'fill-[#166534]/20' : ''}`} />
+          <span>{bookmarked ? 'Roadmap Saved' : 'Save Roadmap'}</span>
         </button>
       </div>
     </div>

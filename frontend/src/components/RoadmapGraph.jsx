@@ -72,11 +72,92 @@ export const FLOW_PALETTES = {
   },
 }
 
+// Groups steps into a render order of "nodes": a node is either one step, or
+// a set of steps that mutually list each other in canRunParallelWith and
+// should be drawn side by side. Works for any real task, not just a fixed
+// 8-step demo shape — a step's canRunParallelWith is the only thing that
+// decides whether it's shown as a parallel branch.
+function buildStepNodes(steps) {
+  const ids = steps.map((s) => String(s.stepId))
+  const byId = new Map(steps.map((s) => [String(s.stepId), s]))
+  const parent = new Map(ids.map((id) => [id, id]))
+
+  function find(x) {
+    while (parent.get(x) !== x) {
+      parent.set(x, parent.get(parent.get(x)))
+      x = parent.get(x)
+    }
+    return x
+  }
+  function union(a, b) {
+    const ra = find(a)
+    const rb = find(b)
+    if (ra !== rb) parent.set(ra, rb)
+  }
+
+  for (const s of steps) {
+    const id = String(s.stepId)
+    for (const otherId of s.canRunParallelWith || []) {
+      if (byId.has(String(otherId))) union(id, String(otherId))
+    }
+  }
+
+  const groupedIds = new Map()
+  for (const id of ids) {
+    const root = find(id)
+    if (!groupedIds.has(root)) groupedIds.set(root, [])
+    groupedIds.get(root).push(id)
+  }
+
+  const nodes = Array.from(groupedIds.values()).map((memberIds) => ({
+    ids: memberIds,
+    steps: memberIds.map((id) => byId.get(id)),
+  }))
+
+  const nodeIndexByStepId = new Map()
+  nodes.forEach((node, idx) => node.ids.forEach((id) => nodeIndexByStepId.set(id, idx)))
+
+  const nodeDeps = nodes.map((node, idx) => {
+    const deps = new Set()
+    for (const s of node.steps) {
+      for (const depId of s.dependsOn || []) {
+        const depIdx = nodeIndexByStepId.get(String(depId))
+        if (depIdx !== undefined && depIdx !== idx) deps.add(depIdx)
+      }
+    }
+    return deps
+  })
+
+  // Same safe topological placement as the backend: place a node once every
+  // node it depends on is placed; anything left over (a cycle) is appended.
+  const placed = new Set()
+  const ordered = []
+  let progressMade = true
+  while (placed.size < nodes.length && progressMade) {
+    progressMade = false
+    nodes.forEach((node, idx) => {
+      if (placed.has(idx)) return
+      if ([...nodeDeps[idx]].every((d) => placed.has(d))) {
+        ordered.push(idx)
+        placed.add(idx)
+        progressMade = true
+      }
+    })
+  }
+  nodes.forEach((_, idx) => {
+    if (!placed.has(idx)) ordered.push(idx)
+  })
+
+  return ordered.map((idx) => nodes[idx])
+}
+
 function RoadmapGraph({
   steps = [],
   onStepSelect,
   selectedStepId,
   completedStepIds = [],
+  taskTitle,
+  cityName,
 }) {
   const [viewMode, setViewMode] = useState('flow') // 'flow' | 'list'
   const [activePalette, setActivePalette] = useState('terracotta')
@@ -93,7 +174,7 @@ function RoadmapGraph({
   }
 
   // Get icon for step type
-  const getStepIcon = (step, status) => {
+  const getStepIcon = (step, status, isLast) => {
     if (status === 'completed') {
       return (
         <div className="h-7 w-7 rounded-full bg-[#166534] text-white flex items-center justify-center shrink-0 shadow-2xs">
@@ -121,7 +202,7 @@ function RoadmapGraph({
       )
     }
 
-    if (step.name.toLowerCase().includes('start operations') || step.stepId === 's8') {
+    if (isLast || step.name.toLowerCase().includes('start operations')) {
       return (
         <div
           className="h-7 w-7 rounded-lg bg-[#FAF7F2] border border-[#EBE1D3] flex items-center justify-center shrink-0"
@@ -147,7 +228,7 @@ function RoadmapGraph({
   }
 
   // Helper render card
-  const renderStepCard = (step, index) => {
+  const renderStepCard = (step, index, isLast = false) => {
     const status = getStepStatus(step.stepId, index)
     const isSelected = selectedStepId === step.stepId
 
@@ -183,7 +264,7 @@ function RoadmapGraph({
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            {getStepIcon(step, status)}
+            {getStepIcon(step, status, isLast)}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="text-sm font-bold text-[#1E293B] truncate">
@@ -209,19 +290,10 @@ function RoadmapGraph({
     )
   }
 
-  // Identify parallel nodes (Steps 5 & 6)
-  const mainLinearSteps = steps.filter(
-    (s) => s.stepId !== 's5' && s.stepId !== 's6'
-  )
-  const parallelStep5 = steps.find((s) => s.stepId === 's5' || s.stepId === 5)
-  const parallelStep6 = steps.find((s) => s.stepId === 's6' || s.stepId === 6)
-
-  const stepsBeforeSplit = mainLinearSteps.filter(
-    (s, idx) => idx < 4 || (s.stepId !== 's7' && s.stepId !== 's8' && idx < 4)
-  )
-  const stepsAfterMerge = mainLinearSteps.filter(
-    (s) => s.stepId === 's7' || s.stepId === 's8' || steps.indexOf(s) >= 6
-  )
+  // Group steps into single-step or parallel-group nodes, ordered so every
+  // node appears only once every node it depends on has already appeared.
+  const stepNodes = buildStepNodes(steps)
+  let runningIndex = 0
 
   return (
     <div className="w-full rounded-2xl bg-white p-5 shadow-civic-sm border border-[#E5D9C8]">
@@ -232,7 +304,8 @@ function RoadmapGraph({
             Your Roadmap
           </h3>
           <p className="text-xs text-[#64748B] font-medium mt-0.5">
-            A step-by-step guide to start a business in Maharashtra
+            {taskTitle ? `A step-by-step guide to ${taskTitle.toLowerCase()}` : 'A step-by-step guide to complete this process'}
+            {cityName ? ` in ${cityName}` : ''}
           </p>
         </div>
 
@@ -318,83 +391,66 @@ function RoadmapGraph({
       {/* FLOW VIEW DIAGRAM */}
       {viewMode === 'flow' && (
         <div className="flex flex-col items-center w-full max-w-xl mx-auto py-2 space-y-2">
-          {/* Initial Linear Steps (Steps 1 to 4) */}
-          {stepsBeforeSplit.map((step, idx) => (
-            <div key={step.stepId} className="w-full flex flex-col items-center">
-              <div className="w-full">{renderStepCard(step, idx + 1)}</div>
+          {stepNodes.map((node, nodeIdx) => {
+            const isLastNode = nodeIdx === stepNodes.length - 1
+            const isParallelGroup = node.steps.length > 1
 
-              {/* Connector Arrow Down */}
-              {idx < stepsBeforeSplit.length - 1 && (
-                <div className="h-6 flex items-center justify-center my-0.5">
-                  <svg className="h-6 w-4 stroke-[#1E293B]" viewBox="0 0 16 24">
-                    <line x1="8" y1="0" x2="8" y2="18" strokeWidth="2" stroke={palette.connector} />
-                    <polygon points="4,16 8,24 12,16" fill={palette.connector} />
-                  </svg>
-                </div>
-              )}
-            </div>
-          ))}
+            return (
+              <div key={node.ids.join('-')} className="w-full flex flex-col items-center">
+                {isParallelGroup ? (
+                  <>
+                    {/* Split arrow into the parallel branch */}
+                    <div className="h-8 flex items-center justify-center w-full my-0.5">
+                      <svg className="h-8 w-full max-w-md fill-none" viewBox="0 0 300 32">
+                        <line x1="150" y1="0" x2="150" y2="12" strokeWidth="2" stroke={palette.connector} />
+                        <line x1="75" y1="12" x2="225" y2="12" strokeWidth="2" stroke={palette.connector} />
+                        <line x1="75" y1="12" x2="75" y2="24" strokeWidth="2" stroke={palette.connector} />
+                        <polygon points="71,22 75,30 79,22" fill={palette.connector} stroke="none" />
+                        <line x1="225" y1="12" x2="225" y2="24" strokeWidth="2" stroke={palette.connector} />
+                        <polygon points="221,22 225,30 229,22" fill={palette.connector} stroke="none" />
+                      </svg>
+                    </div>
 
-          {/* Connector Arrow Down into Split Branch */}
-          {(parallelStep5 || parallelStep6) && (
-            <div className="h-8 flex items-center justify-center w-full my-0.5">
-              <svg className="h-8 w-full max-w-md fill-none" viewBox="0 0 300 32">
-                {/* Center stem down */}
-                <line x1="150" y1="0" x2="150" y2="12" strokeWidth="2" stroke={palette.connector} />
-                {/* Horizontal split bar */}
-                <line x1="75" y1="12" x2="225" y2="12" strokeWidth="2" stroke={palette.connector} />
-                {/* Left branch down */}
-                <line x1="75" y1="12" x2="75" y2="24" strokeWidth="2" stroke={palette.connector} />
-                <polygon points="71,22 75,30 79,22" fill={palette.connector} stroke="none" />
-                {/* Right branch down */}
-                <line x1="225" y1="12" x2="225" y2="24" strokeWidth="2" stroke={palette.connector} />
-                <polygon points="221,22 225,30 229,22" fill={palette.connector} stroke="none" />
-              </svg>
-            </div>
-          )}
+                    {/* Parallel side-by-side cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                      {node.steps.map((step) => {
+                        runningIndex += 1
+                        return renderStepCard(step, runningIndex, isLastNode)
+                      })}
+                    </div>
 
-          {/* Parallel Side-By-Side Nodes (Steps 5 & 6) */}
-          {(parallelStep5 || parallelStep6) && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-              {parallelStep5 && renderStepCard(parallelStep5, 5)}
-              {parallelStep6 && renderStepCard(parallelStep6, 6)}
-            </div>
-          )}
+                    {/* Merge arrow back into the linear flow */}
+                    <div className="h-8 flex items-center justify-center w-full my-0.5">
+                      <svg className="h-8 w-full max-w-md fill-none" viewBox="0 0 300 32">
+                        <line x1="75" y1="0" x2="75" y2="16" strokeWidth="2" stroke={palette.connector} />
+                        <line x1="225" y1="0" x2="225" y2="16" strokeWidth="2" stroke={palette.connector} />
+                        <line x1="75" y1="16" x2="225" y2="16" strokeWidth="2" stroke={palette.connector} />
+                        <line x1="150" y1="16" x2="150" y2="26" strokeWidth="2" stroke={palette.connector} />
+                        <polygon points="146,24 150,32 154,24" fill={palette.connector} stroke="none" />
+                      </svg>
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full">
+                    {(() => {
+                      runningIndex += 1
+                      return renderStepCard(node.steps[0], runningIndex, isLastNode)
+                    })()}
+                  </div>
+                )}
 
-          {/* Rejoining Split Arrows into Merge */}
-          {(parallelStep5 || parallelStep6) && (
-            <div className="h-8 flex items-center justify-center w-full my-0.5">
-              <svg className="h-8 w-full max-w-md fill-none" viewBox="0 0 300 32">
-                {/* Left branch down */}
-                <line x1="75" y1="0" x2="75" y2="16" strokeWidth="2" stroke={palette.connector} />
-                {/* Right branch down */}
-                <line x1="225" y1="0" x2="225" y2="16" strokeWidth="2" stroke={palette.connector} />
-                {/* Horizontal merge bar */}
-                <line x1="75" y1="16" x2="225" y2="16" strokeWidth="2" stroke={palette.connector} />
-                {/* Center stem down */}
-                <line x1="150" y1="16" x2="150" y2="26" strokeWidth="2" stroke={palette.connector} />
-                <polygon points="146,24 150,32 154,24" fill={palette.connector} stroke="none" />
-              </svg>
-            </div>
-          )}
-
-          {/* Remaining Rejoined Steps (Steps 7 & 8) */}
-          {stepsAfterMerge.map((step, idx) => (
-            <div key={step.stepId} className="w-full flex flex-col items-center">
-              <div className="w-full">
-                {renderStepCard(step, 6 + idx + 1)}
+                {/* Connector down to the next node */}
+                {!isLastNode && !isParallelGroup && (
+                  <div className="h-6 flex items-center justify-center my-0.5">
+                    <svg className="h-6 w-4 stroke-[#1E293B]" viewBox="0 0 16 24">
+                      <line x1="8" y1="0" x2="8" y2="18" strokeWidth="2" stroke={palette.connector} />
+                      <polygon points="4,16 8,24 12,16" fill={palette.connector} />
+                    </svg>
+                  </div>
+                )}
               </div>
-
-              {idx < stepsAfterMerge.length - 1 && (
-                <div className="h-6 flex items-center justify-center my-0.5">
-                  <svg className="h-6 w-4" viewBox="0 0 16 24">
-                    <line x1="8" y1="0" x2="8" y2="18" strokeWidth="2" stroke={palette.connector} />
-                    <polygon points="4,16 8,24 12,16" fill={palette.connector} />
-                  </svg>
-                </div>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

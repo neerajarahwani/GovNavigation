@@ -1,13 +1,23 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 import TaskInputForm from '../components/TaskInputForm'
 import BusinessNavSidebar from '../components/BusinessNavSidebar'
 import RoadmapGraph from '../components/RoadmapGraph'
 import StepDetailPanel from '../components/StepDetailPanel'
 import SidebarTabModal from '../components/SidebarTabModal'
+import AnnouncementBanner from '../components/AnnouncementBanner'
 import { queryTask } from '../api/tasksApi'
 import { useAuth } from '../context/AuthContext'
-import { getProgress, setStepCompleted } from '../api/progressApi'
+import { getTaskProgress, markStep, setBookmark, setDocumentOwned } from '../api/progressApi'
+import { getAnnouncements } from '../api/announcementsApi'
+
+// A real task id is a Mongo ObjectId; the pre-search placeholder roadmap
+// below uses a fake one, so actions that hit the backend (bookmark, mark
+// complete, document ownership) are only offered once a real task is loaded.
+function isRealTaskId(id) {
+  return typeof id === 'string' && /^[0-9a-fA-F]{24}$/.test(id)
+}
 
 
 // Default Business Registration roadmap data matching reference image
@@ -15,6 +25,9 @@ const DEFAULT_BUSINESS_ROADMAP = {
   taskId: 'biz-reg-mh',
   name: 'Business Registration',
   city: 'Maharashtra',
+  forms: [],
+  feeBreakdown: [],
+  departments: [],
   steps: [
     {
       stepId: 's1',
@@ -160,14 +173,20 @@ const DEFAULT_BUSINESS_ROADMAP = {
   ],
 }
 function TaskInputPage() {
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const [taskData, setTaskData] = useState(DEFAULT_BUSINESS_ROADMAP)
   const [selectedStep, setSelectedStep] = useState(DEFAULT_BUSINESS_ROADMAP.steps[1]) // Step 2 selected by default
   const [completedStepIds, setCompletedStepIds] = useState(['s1']) // Step 1 completed by default (25% progress = 2 of 8)
+  const [ownedDocuments, setOwnedDocuments] = useState([])
+  const [bookmarked, setBookmarked] = useState(false)
+  const [announcements, setAnnouncements] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [saveToast, setSaveToast] = useState(false)
+  const [authPrompt, setAuthPrompt] = useState(false)
   const [activeModalTab, setActiveModalTab] = useState(null)
+
+  const isRealTask = isRealTaskId(taskData.taskId)
 
   // Handle Form Submission
   async function handleFormSubmit({ text, city }) {
@@ -178,55 +197,109 @@ function TaskInputPage() {
       const res = await queryTask({ text, city })
       if (res.success && res.data && res.data.steps && res.data.steps.length > 0) {
         const formattedTask = {
-          taskId: res.data.task.taskId || 'custom-task',
+          taskId: res.data.task.taskId,
           name: res.data.task.title || text,
-          city: res.data.task.city || city || 'Maharashtra',
+          city: res.data.task.city || city || '',
+          forms: res.data.task.forms || [],
+          feeBreakdown: res.data.task.feeBreakdown || [],
+          departments: res.data.task.departments || [],
           steps: res.data.steps.map((s, idx) => ({
-            stepId: s.stepId || `step-${idx + 1}`,
+            stepId: s.stepId,
             name: s.name.match(/^\d+\./) ? s.name : `${idx + 1}. ${s.name}`,
-            subtitle: s.department || 'Government requirement',
-            description: s.name,
-            keyPoints: s.prerequisites || [
-              'Understand prerequisites & eligibility criteria',
-              'Follow government guidelines & document submissions',
-              'Verify official department portal instructions',
-            ],
-            documents: s.documents || ['PAN Card', 'Aadhaar Card', 'Identity Proof'],
+            subtitle: s.subtitle || s.department || 'Government requirement',
+            description: s.description || s.name,
+            keyPoints: s.keyPoints && s.keyPoints.length > 0 ? s.keyPoints : s.prerequisites || [],
+            documents: s.documents || [],
             department: s.department || 'Concerned Authority',
-            govtTag: 'Government of India',
-            sourceTitle: `${s.department || 'Official'} Portal`,
-            sourceUrl: s.sourceUrl || 'https://www.india.gov.in/',
+            govtTag: s.govtTag || '',
+            sourceTitle: s.sourceTitle || `${s.department || 'Official'} Portal`,
+            sourceUrl: s.sourceUrl,
+            fees: s.fees,
+            estimatedDays: s.estimatedDays,
+            eligibility: s.eligibility,
+            dependsOn: s.dependsOn || [],
+            canRunParallelWith: s.canRunParallelWith || [],
           })),
         }
         setTaskData(formattedTask)
         setSelectedStep(formattedTask.steps[0])
         setCompletedStepIds([])
+        setOwnedDocuments([])
+        setBookmarked(false)
+
+        // Load the logged-in user's real saved progress for this task.
+        if (token && isRealTaskId(formattedTask.taskId)) {
+          const progressRes = await getTaskProgress(formattedTask.taskId, token)
+          if (progressRes.success) {
+            setCompletedStepIds(progressRes.data.completedSteps || [])
+            setOwnedDocuments(progressRes.data.ownedDocuments || [])
+            setBookmarked(!!progressRes.data.bookmarked)
+          }
+        }
+
+        // Load any active announcements for this task.
+        const announcementsRes = await getAnnouncements(formattedTask.taskId)
+        if (announcementsRes.success) {
+          setAnnouncements(announcementsRes.data || [])
+        } else {
+          setAnnouncements([])
+        }
       } else {
-        // Fallback to default roadmap formatted with search terms if backend matches nothing
-        setTaskData({
-          ...DEFAULT_BUSINESS_ROADMAP,
-          name: text.length > 40 ? text.slice(0, 40) + '...' : text,
-          city: city || 'Maharashtra',
-        })
-        setSelectedStep(DEFAULT_BUSINESS_ROADMAP.steps[1])
+        setError(res.error || "We don't have information on this yet. Try describing it differently.")
       }
     } catch (err) {
-      // Keep beautiful responsive UI loaded
-      setTaskData({
-        ...DEFAULT_BUSINESS_ROADMAP,
-        name: text,
-        city: city || 'Maharashtra',
-      })
-      setSelectedStep(DEFAULT_BUSINESS_ROADMAP.steps[1])
+      setError('Could not reach the server right now — please try again.')
     } finally {
       setIsLoading(false)
     }
   }
 
   // Handle Save Roadmap Action
-  function handleSaveRoadmap() {
-    setSaveToast(true)
-    setTimeout(() => setSaveToast(false), 3000)
+  async function handleSaveRoadmap() {
+    if (!token) {
+      setAuthPrompt(true)
+      setTimeout(() => setAuthPrompt(false), 4000)
+      return
+    }
+    if (!isRealTask) return
+
+    const nextBookmarked = !bookmarked
+    const res = await setBookmark(taskData.taskId, nextBookmarked, token)
+    if (res.success) {
+      setBookmarked(nextBookmarked)
+      setSaveToast(true)
+      setTimeout(() => setSaveToast(false), 3000)
+    }
+  }
+
+  // Handle marking a step complete/incomplete
+  async function handleToggleStepComplete(stepId, completed) {
+    if (!token) {
+      setAuthPrompt(true)
+      setTimeout(() => setAuthPrompt(false), 4000)
+      return
+    }
+    if (!isRealTask) return
+
+    const res = await markStep({ taskId: taskData.taskId, stepId, completed }, token)
+    if (res.success) {
+      setCompletedStepIds(res.data.completedSteps || [])
+    }
+  }
+
+  // Handle checking/unchecking a document as already-owned
+  async function handleToggleDocumentOwned(documentName, owned) {
+    if (!token) {
+      setAuthPrompt(true)
+      setTimeout(() => setAuthPrompt(false), 4000)
+      return
+    }
+    if (!isRealTask) return
+
+    const res = await setDocumentOwned(taskData.taskId, documentName, owned, token)
+    if (res.success) {
+      setOwnedDocuments(res.data.ownedDocuments || [])
+    }
   }
 
   // Navigation helpers for Right Sidebar Step Detail Panel
@@ -261,11 +334,28 @@ function TaskInputPage() {
           </div>
         )}
 
+        {/* Login Prompt Toast */}
+        {authPrompt && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl bg-[#1E293B] text-white px-4 py-3 text-xs font-bold shadow-xl">
+            <span>Log in to save your progress.</span>
+            <Link to="/login" className="rounded-lg bg-[#C84B24] px-2.5 py-1 hover:bg-[#AF3C19] transition">
+              Log In
+            </Link>
+          </div>
+        )}
+
         {/* Sidebar Interactive Tab Modal */}
         <SidebarTabModal
           activeTab={activeModalTab}
           onClose={() => setActiveModalTab(null)}
           steps={taskData.steps}
+          taskTitle={taskData.name}
+          cityName={taskData.city}
+          forms={taskData.forms || []}
+          feeBreakdown={taskData.feeBreakdown || []}
+          departments={taskData.departments || []}
+          ownedDocuments={ownedDocuments}
+          onToggleDocumentOwned={handleToggleDocumentOwned}
         />
 
         {/* Hero Search Section */}
@@ -275,6 +365,11 @@ function TaskInputPage() {
           currentQuery={taskData.name}
           currentCity={taskData.city}
         />
+
+        {/* Announcements for this task */}
+        {announcements.map((a) => (
+          <AnnouncementBanner key={a._id} text={a.body} />
+        ))}
 
         {/* Error Alert */}
         {error && (
@@ -290,11 +385,12 @@ function TaskInputPage() {
             <BusinessNavSidebar
               title={taskData.name}
               stateName={taskData.city}
-              completedCount={completedStepIds.length + 1}
+              completedCount={completedStepIds.length}
               totalCount={taskData.steps.length}
               activeTab={activeModalTab || 'Roadmap'}
               onTabChange={setActiveModalTab}
               onSaveRoadmap={handleSaveRoadmap}
+              bookmarked={bookmarked}
             />
           </div>
 
@@ -306,6 +402,8 @@ function TaskInputPage() {
               onStepSelect={setSelectedStep}
               selectedStepId={selectedStep?.stepId}
               completedStepIds={completedStepIds}
+              taskTitle={taskData.name}
+              cityName={taskData.city}
             />
           </div>
 
@@ -317,6 +415,10 @@ function TaskInputPage() {
               totalSteps={taskData.steps.length}
               onPrevStep={handlePrevStep}
               onNextStep={handleNextStep}
+              isCompleted={selectedStep ? completedStepIds.includes(selectedStep.stepId) : false}
+              onToggleComplete={
+                isRealTask ? (completed) => handleToggleStepComplete(selectedStep.stepId, completed) : undefined
+              }
             />
           </div>
         </section>

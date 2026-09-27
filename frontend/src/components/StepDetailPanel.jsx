@@ -1,4 +1,4 @@
-import { Lightbulb, FileText, Landmark, Link as LinkIcon, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
+import { Lightbulb, FileText, Landmark, Link as LinkIcon, ChevronLeft, ChevronRight, ExternalLink, CheckCircle2 } from 'lucide-react'
 
 function StepDetailPanel({
   step,
@@ -6,6 +6,8 @@ function StepDetailPanel({
   totalSteps = 8,
   onPrevStep,
   onNextStep,
+  isCompleted = false,
+  onToggleComplete,
 }) {
   if (!step) return null
 
@@ -101,12 +103,23 @@ function StepDetailPanel({
             <span>Documents Required</span>
           </div>
           <ul className="space-y-1.5 text-xs text-[#475569] font-medium pl-1">
-            {documents.map((doc, i) => (
-              <li key={i} className="flex items-start gap-2 leading-relaxed">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#C84B24] mt-1.5 shrink-0" />
-                <span>{doc}</span>
-              </li>
-            ))}
+            {documents.map((doc, i) => {
+              const docName = typeof doc === 'string' ? doc : doc.name
+              const docTag = typeof doc === 'string' ? null : doc.tag
+              return (
+                <li key={i} className="flex items-start gap-2 leading-relaxed">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#C84B24] mt-1.5 shrink-0" />
+                  <span>
+                    {docName}
+                    {docTag ? (
+                      <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FAF7F2] border border-[#EBE1D3] text-[#64748B]">
+                        {docTag}
+                      </span>
+                    ) : null}
+                  </span>
+                </li>
+              )
+            })}
           </ul>
         </div>
 
@@ -144,6 +157,22 @@ function StepDetailPanel({
           </a>
         </div>
       </div>
+
+      {/* Mark Step Complete */}
+      {onToggleComplete && (
+        <button
+          type="button"
+          onClick={() => onToggleComplete(!isCompleted)}
+          className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 px-3 text-xs font-bold transition ${
+            isCompleted
+              ? 'border-[#166534] bg-[#F0FDF4] text-[#166534]'
+              : 'border-[#E5D9C8] bg-white text-[#1E293B] hover:bg-[#FAF7F2]'
+          }`}
+        >
+          <CheckCircle2 className={`h-4 w-4 ${isCompleted ? 'fill-[#166534]/10' : ''}`} />
+          <span>{isCompleted ? 'Marked as Complete' : 'Mark Step Complete'}</span>
+        </button>
+      )}
 
       {/* Footer Buttons */}
       <div className="flex items-center gap-3 pt-3 border-t border-[#F0E6D8]">
