@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react'
 import { Search, MapPin, ArrowRight, Loader2, ChevronDown } from 'lucide-react'
 
+// Each of these maps to a task that actually exists in the database — picking
+// a task the backend has no data for always returns "we don't have
+// information on this yet," which is confusing when it's presented as a
+// ready-to-click example.
 const TRY_EXAMPLES = [
-  { label: 'Start a business', query: 'I want to start a business in Maharashtra', state: 'Maharashtra' },
-  { label: 'Apply for caste certificate', query: 'Apply for caste certificate in Maharashtra', state: 'Maharashtra' },
-  { label: 'Get a trade license', query: 'Get a trade license in Maharashtra', state: 'Maharashtra' },
-  { label: 'Register a NGO', query: 'Register a NGO in Maharashtra', state: 'Maharashtra' },
+  { label: 'Register a business', query: 'I want to register a small business in Mumbai', state: 'Mumbai' },
+  { label: 'Birth certificate', query: 'Apply for a birth certificate in Mumbai', state: 'Mumbai' },
+  { label: 'MSME / Udyam registration', query: 'Register as an MSME (Udyam)', state: 'All India' },
+  { label: 'Apply for a passport', query: 'Apply for a passport', state: 'All India' },
 ]
 
 function TaskInputForm({ onSubmit, isLoading, currentQuery, currentCity }) {
   const [text, setText] = useState(currentQuery || '')
-  const [selectedCity, setSelectedCity] = useState(currentCity || 'Maharashtra')
+  const [selectedCity, setSelectedCity] = useState(currentCity || 'Mumbai')
 
   // Re-sync when a saved roadmap is opened (currentQuery/currentCity change
   // from outside) — without this the box kept showing stale text from
@@ -162,7 +166,7 @@ function TaskInputForm({ onSubmit, isLoading, currentQuery, currentCity }) {
                 type="text"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="I want to start a business in Maharashtra"
+                placeholder="I want to register a small business in Mumbai"
                 className="w-full bg-transparent text-xs sm:text-sm font-semibold text-[#1E293B] placeholder-[#94A3B8] focus:outline-none"
                 required
               />
@@ -176,6 +180,8 @@ function TaskInputForm({ onSubmit, isLoading, currentQuery, currentCity }) {
                 onChange={(e) => setSelectedCity(e.target.value)}
                 className="w-full bg-transparent text-xs sm:text-sm font-bold text-[#1E293B] focus:outline-none cursor-pointer appearance-none pr-5"
               >
+                <option value="Mumbai">Mumbai</option>
+                <option value="All India">All India (nationwide)</option>
                 <option value="Maharashtra">Maharashtra</option>
                 <option value="Delhi">Delhi</option>
                 <option value="Karnataka">Karnataka</option>

@@ -34,8 +34,14 @@ async function findBestMatchingTask(serviceText, cityText) {
   const serviceWords = toWordSet(serviceText);
   if (serviceWords.size === 0) return null;
 
+  // A nationwide task (city "All India") isn't tied to any one city, so it
+  // stays in the pool no matter which city the citizen picked — otherwise a
+  // city filter permanently hides every nationwide service (Voter ID,
+  // Passport, Driving License, MSME) since none of them match a state name.
   const candidates = await Task.find(
-    cityText ? { city: new RegExp(`^${escapeForRegex(cityText)}$`, 'i') } : {}
+    cityText
+      ? { $or: [{ city: new RegExp(`^${escapeForRegex(cityText)}$`, 'i') }, { city: 'All India' }] }
+      : {}
   );
   const pool = candidates.length > 0 ? candidates : await Task.find({});
 
@@ -51,6 +57,14 @@ async function findBestMatchingTask(serviceText, cityText) {
     let score = 0;
     for (const word of serviceWords) {
       if (keywordWords.has(word)) score += 1;
+    }
+    // A task tagged for the citizen's exact city is what they're most likely
+    // asking about — weight it above an equally-worded nationwide task, so
+    // e.g. "register a business in Mumbai" doesn't get outscored by the
+    // nationwide MSME task just because "registration" is also one of its
+    // keywords.
+    if (score > 0 && cityText && task.city.toLowerCase() === cityText.toLowerCase()) {
+      score += serviceWords.size;
     }
     if (score > bestScore) {
       bestScore = score;

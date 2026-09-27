@@ -228,7 +228,7 @@ function RoadmapGraph({
   }
 
   // Helper render card
-  const renderStepCard = (step, index, isLast = false) => {
+  const renderStepCard = (step, index, isLast = false, isParallel = false) => {
     const status = getStepStatus(step.stepId, index)
     const isSelected = selectedStepId === step.stepId
 
@@ -276,6 +276,15 @@ function RoadmapGraph({
                     style={{ backgroundColor: palette.badgeBg }}
                   >
                     Current Step
+                  </span>
+                )}
+                {isParallel && (
+                  <span
+                    className="flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[9px] font-bold"
+                    style={{ borderColor: palette.connector, color: palette.connector }}
+                  >
+                    <GitFork className="h-2.5 w-2.5" />
+                    Parallel
                   </span>
                 )}
               </div>
@@ -391,6 +400,24 @@ function RoadmapGraph({
       {/* FLOW VIEW DIAGRAM */}
       {viewMode === 'flow' && (
         <div id="roadmap-graph-capture" className="flex flex-col items-center w-full max-w-xl mx-auto py-2 space-y-2">
+          {/* Start marker */}
+          {stepNodes.length > 0 && (
+            <>
+              <div
+                className="rounded-full px-4 py-1.5 text-xs font-bold text-white shadow-2xs"
+                style={{ backgroundColor: palette.primary }}
+              >
+                Start
+              </div>
+              <div className="h-6 flex items-center justify-center my-0.5">
+                <svg className="h-6 w-4 stroke-[#1E293B]" viewBox="0 0 16 24">
+                  <line x1="8" y1="0" x2="8" y2="18" strokeWidth="2" stroke={palette.connector} />
+                  <polygon points="4,16 8,24 12,16" fill={palette.connector} />
+                </svg>
+              </div>
+            </>
+          )}
+
           {stepNodes.map((node, nodeIdx) => {
             const isLastNode = nodeIdx === stepNodes.length - 1
             const isParallelGroup = node.steps.length > 1
@@ -411,12 +438,26 @@ function RoadmapGraph({
                       </svg>
                     </div>
 
-                    {/* Parallel side-by-side cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-                      {node.steps.map((step) => {
-                        runningIndex += 1
-                        return renderStepCard(step, runningIndex, isLastNode)
-                      })}
+                    {/* Parallel side-by-side cards — dashed enclosure + label
+                        marks this as a distinct "can be done together" notation,
+                        not just two cards that happen to sit side by side. */}
+                    <div
+                      className="w-full rounded-xl border-2 border-dashed p-2.5 pt-6 relative"
+                      style={{ borderColor: palette.connector }}
+                    >
+                      <span
+                        className="absolute -top-3 left-3 flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold text-white shadow-2xs"
+                        style={{ backgroundColor: palette.connector }}
+                      >
+                        <GitFork className="h-3 w-3" />
+                        Do these in parallel
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                        {node.steps.map((step) => {
+                          runningIndex += 1
+                          return renderStepCard(step, runningIndex, isLastNode, true)
+                        })}
+                      </div>
                     </div>
 
                     {/* Merge arrow back into the linear flow */}
@@ -451,6 +492,22 @@ function RoadmapGraph({
               </div>
             )
           })}
+
+          {/* End marker */}
+          {stepNodes.length > 0 && (
+            <>
+              <div className="h-6 flex items-center justify-center my-0.5">
+                <svg className="h-6 w-4 stroke-[#1E293B]" viewBox="0 0 16 24">
+                  <line x1="8" y1="0" x2="8" y2="18" strokeWidth="2" stroke={palette.connector} />
+                  <polygon points="4,16 8,24 12,16" fill={palette.connector} />
+                </svg>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold text-white shadow-2xs bg-[#166534]">
+                <Flag className="h-3.5 w-3.5 fill-current" />
+                <span>End</span>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -458,7 +515,9 @@ function RoadmapGraph({
       {viewMode === 'list' && (
         <div className="space-y-3 py-2">
           {steps.map((step, idx) => (
-            <div key={step.stepId}>{renderStepCard(step, idx + 1)}</div>
+            <div key={step.stepId}>
+              {renderStepCard(step, idx + 1, idx === steps.length - 1, (step.canRunParallelWith || []).length > 0)}
+            </div>
           ))}
         </div>
       )}
