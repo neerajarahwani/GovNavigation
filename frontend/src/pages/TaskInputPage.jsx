@@ -155,15 +155,15 @@ function TaskInputPage() {
     setSavedRoadmapsLoading(false)
   }
 
-  // Routes Header's nav clicks: Home just closes any open modal, My
-  // Roadmaps/Saved open the saved-roadmaps modal, everything else (Help)
-  // goes to the normal task-detail modal.
+  // Routes Header's nav clicks: Home just closes any open modal, Saved
+  // opens the saved-roadmaps modal, everything else (Help) goes to the
+  // normal task-detail modal.
   function handleHeaderTabChange(tab) {
     if (tab === 'home') {
       setActiveModalTab(null)
       return
     }
-    if (tab === 'Roadmaps' || tab === 'Saved') {
+    if (tab === 'Saved') {
       setActiveModalTab(tab)
       handleOpenSavedRoadmaps()
       return

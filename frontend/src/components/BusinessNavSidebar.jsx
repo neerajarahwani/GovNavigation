@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import {
   Map,
   Info,
@@ -11,7 +10,6 @@ import {
   UserCheck
 } from 'lucide-react'
 import ExportPdfButton from './ExportPdfButton'
-import NearbyAgentsList from './NearbyAgentsList'
 
 function BusinessNavSidebar({
   title = 'Business Registration',
@@ -34,6 +32,7 @@ function BusinessNavSidebar({
     { name: 'Fees', icon: Coins },
     { name: 'Departments', icon: Landmark },
     { name: 'Official Sources', icon: Link2 },
+    { name: 'Nearby Agents', icon: UserCheck },
   ]
 
   // Circular gauge calculations
@@ -60,37 +59,23 @@ function BusinessNavSidebar({
           const isActive = activeTab === item.name
 
           return (
-            <div key={item.name} className="flex flex-col gap-1">
-              <button
-                type="button"
-                onClick={() => onTabChange && onTabChange(item.name)}
-                className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition text-left ${
-                  isActive
-                    ? 'bg-[#FFF4F0] text-[#C84B24] border border-[#FADCD1] shadow-2xs'
-                    : 'text-[#64748B] hover:bg-white hover:text-[#1E293B]'
+            <button
+              key={item.name}
+              type="button"
+              onClick={() => onTabChange && onTabChange(item.name)}
+              className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition text-left ${
+                isActive
+                  ? 'bg-[#FFF4F0] text-[#C84B24] border border-[#FADCD1] shadow-2xs'
+                  : 'text-[#64748B] hover:bg-white hover:text-[#1E293B]'
+              }`}
+            >
+              <Icon
+                className={`h-4 w-4 ${
+                  isActive ? 'text-[#C84B24]' : 'text-[#94A3B8]'
                 }`}
-              >
-                <Icon
-                  className={`h-4 w-4 ${
-                    isActive ? 'text-[#C84B24]' : 'text-[#94A3B8]'
-                  }`}
-                />
-                <span>{item.name}</span>
-              </button>
-
-              {/* If Documents button on left sidebar is active, show Agents list inline right under Documents */}
-              {item.name === 'Documents' && (
-                <div className="mt-1 mb-2 pl-1">
-                  <div className="rounded-xl border border-[#F5E6CD] bg-[#FFF8EC] p-3 space-y-2">
-                    <div className="flex items-center gap-1.5 font-bold text-[#8C5815] text-[11px]">
-                      <UserCheck className="h-3.5 w-3.5 text-[#D97706]" />
-                      <span>Verified Local Agents</span>
-                    </div>
-                    <NearbyAgentsList currentCity={stateName} isCompact={true} />
-                  </div>
-                </div>
-              )}
-            </div>
+              />
+              <span>{item.name}</span>
+            </button>
           )
         })}
       </nav>

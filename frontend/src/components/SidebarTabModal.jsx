@@ -29,10 +29,10 @@ function SidebarTabModal({
   ownedDocuments = [],
   onToggleDocumentOwned,
 }) {
-  // 'home', 'Roadmap', 'Roadmaps' and 'Saved' are handled elsewhere (Home
-  // just closes any modal; My Roadmaps/Saved open SavedRoadmapsModal) — this
-  // modal only knows about the task-detail tabs below.
-  const HANDLED_TABS = ['Overview', 'Documents', 'Forms', 'Fees', 'Departments', 'Official Sources', 'Help']
+  // 'home', 'Roadmap' and 'Saved' are handled elsewhere (Home just closes
+  // any modal; Saved opens SavedRoadmapsModal) — this modal only knows
+  // about the task-detail tabs below.
+  const HANDLED_TABS = ['Overview', 'Documents', 'Forms', 'Fees', 'Departments', 'Official Sources', 'Nearby Agents', 'Help']
   if (!HANDLED_TABS.includes(activeTab)) return null
 
   const documents = collectTaskDocuments(steps)
@@ -139,11 +139,6 @@ function SidebarTabModal({
                       </div>
                     )
                   })}
-                </div>
-
-                {/* Nearby Documentation Agents Section */}
-                <div className="pt-4 border-t border-[#F0E6D8]">
-                  <NearbyAgentsList currentCity={cityName} />
                 </div>
               </>
             )}
@@ -295,6 +290,9 @@ function SidebarTabModal({
             )}
           </div>
         )}
+
+        {/* NEARBY AGENTS CONTENT */}
+        {activeTab === 'Nearby Agents' && <NearbyAgentsList currentCity={cityName} />}
 
         {/* HELP CONTENT */}
         {activeTab === 'Help' && (

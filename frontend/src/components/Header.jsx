@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Home, BookOpen, Bookmark, HelpCircle, ChevronDown, Shield, LogOut } from 'lucide-react'
+import { Home, Bookmark, HelpCircle, ChevronDown, Shield, LogOut } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 
 function Header({ activeTab = 'home', onTabChange, taskId }) {
@@ -70,19 +70,6 @@ function Header({ activeTab = 'home', onTabChange, taskId }) {
           >
             <Home className="h-4 w-4" />
             <span>Home</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabClick('Roadmaps')}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition ${
-              activeTab === 'Roadmaps'
-                ? 'bg-[#FAF7F2] text-[#C84B24] border border-[#E5D9C8] shadow-2xs'
-                : 'text-[#5A5046] hover:text-[#1E293B]'
-            }`}
-          >
-            <BookOpen className="h-4 w-4" />
-            <span>My Roadmaps</span>
           </button>
 
           <button
