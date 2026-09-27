@@ -375,6 +375,7 @@ function TaskInputPage() {
                 onToggleComplete={
                   isRealTask ? (completed) => handleToggleStepComplete(selectedStep.stepId, completed) : undefined
                 }
+                cityName={taskData?.city}
               />
             </div>
           </section>

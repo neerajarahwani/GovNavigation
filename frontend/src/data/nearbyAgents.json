@@ -1,0 +1,194 @@
+{
+  "maharashtra": [
+    {
+      "id": "mh-1",
+      "name": "Apex Documentation & Legal Facilitation",
+      "city": "Mumbai",
+      "area": "Fort & CST, South Mumbai",
+      "address": "Office 402, Sterling Building, D.N. Road, Fort, Mumbai - 400001",
+      "phone": "+91 98201 44512",
+      "rating": 4.9,
+      "reviewsCount": 384,
+      "services": ["Shop Act License", "GST & Trade License", "PAN / Aadhaar Correction", "Society Reg."],
+      "pricing": "₹300 - ₹800",
+      "operatingHours": "Mon-Sat: 9:30 AM - 7:30 PM",
+      "verifiedBy": "JustDial Verified Partner"
+    },
+    {
+      "id": "mh-2",
+      "name": "Sahyadri Civic & License Consultancy",
+      "city": "Pune",
+      "area": "Shivaji Nagar & FC Road, Pune",
+      "address": "Shop 12, Commercial Complex, Near Sancheti Hospital, Shivaji Nagar, Pune - 411005",
+      "phone": "+91 98902 77819",
+      "rating": 4.8,
+      "reviewsCount": 296,
+      "services": ["Caste & Domicile Cert.", "Trade License", "Food License (FSSAI)", "Trust Reg."],
+      "pricing": "₹250 - ₹750",
+      "operatingHours": "Mon-Sat: 10:00 AM - 8:00 PM",
+      "verifiedBy": "JustDial Verified Partner"
+    },
+    {
+      "id": "mh-3",
+      "name": "Metro Citizen Documentation Center",
+      "city": "Thane",
+      "area": "Naupada & Station Road, Thane",
+      "address": "G-4, Ram Maruti Road, Near Thane Station (W), Thane - 400602",
+      "phone": "+91 97690 33210",
+      "rating": 4.9,
+      "reviewsCount": 215,
+      "services": ["Birth & Death Cert.", "Udyam MSME", "Property Registration", "Affidavits"],
+      "pricing": "₹200 - ₹600",
+      "operatingHours": "Mon-Sat: 9:00 AM - 7:00 PM",
+      "verifiedBy": "JustDial Verified Partner"
+    },
+    {
+      "id": "mh-4",
+      "name": "Konkan Administrative Services",
+      "city": "Navi Mumbai",
+      "area": "Vashi Sector 17, Navi Mumbai",
+      "address": "Unit 108, Sector 17, Vashi Plaza, Navi Mumbai - 400703",
+      "phone": "+91 98334 11982",
+      "rating": 4.7,
+      "reviewsCount": 178,
+      "services": ["GST & Tax Filings", "Shop Act", "NOC & Clearances"],
+      "pricing": "₹300 - ₹700",
+      "operatingHours": "Mon-Sat: 10:00 AM - 7:00 PM",
+      "verifiedBy": "JustDial Verified Partner"
+    }
+  ],
+  "delhi": [
+    {
+      "id": "dl-1",
+      "name": "Rajdhani Citizen Support Bureau",
+      "city": "Central Delhi",
+      "area": "Connaught Place, New Delhi",
+      "address": "Suite 204, Statesman House, Barakhamba Road, Connaught Place, New Delhi - 110001",
+      "phone": "+91 98110 55432",
+      "rating": 4.9,
+      "reviewsCount": 420,
+      "services": ["Trade License (MCD)", "GST Reg.", "Company Incorp.", "ISO & Food License"],
+      "pricing": "₹350 - ₹900",
+      "operatingHours": "Mon-Sat: 9:30 AM - 7:00 PM",
+      "verifiedBy": "JustDial Verified Partner"
+    },
+    {
+      "id": "dl-2",
+      "name": "Capital Document Facilitators",
+      "city": "South Delhi",
+      "area": "Nehru Place, New Delhi",
+      "address": "Flat 302, Hemkunt Tower, Nehru Place, New Delhi - 110019",
+      "phone": "+91 98712 88901",
+      "rating": 4.8,
+      "reviewsCount": 312,
+      "services": ["Caste & Domicile", "Income Certificate", "Birth Cert (MCD)", "Pan Card"],
+      "pricing": "₹250 - ₹650",
+      "operatingHours": "Mon-Sat: 10:00 AM - 8:00 PM",
+      "verifiedBy": "JustDial Verified Partner"
+    },
+    {
+      "id": "dl-3",
+      "name": "Pragati Administrative Consultancy",
+      "city": "East Delhi",
+      "area": "Laxmi Nagar, Delhi",
+      "address": "Shop 14, Vikas Marg, Laxmi Nagar Metro Gate 2, Delhi - 110092",
+      "phone": "+91 99104 66723",
+      "rating": 4.7,
+      "reviewsCount": 245,
+      "services": ["NGO / Trust Reg.", "MSME Udyam", "Shop Act", "Notary & Affidavits"],
+      "pricing": "₹200 - ₹600",
+      "operatingHours": "Mon-Sat: 9:30 AM - 7:30 PM",
+      "verifiedBy": "JustDial Verified Partner"
+    }
+  ],
+  "karnataka": [
+    {
+      "id": "ka-1",
+      "name": "Deccan Civic Consultancy Services",
+      "city": "Bangalore Urban",
+      "area": "MG Road & Brigade Road, Bengaluru",
+      "address": "Office 12, Barton Centre, MG Road, Bengaluru - 560001",
+      "phone": "+91 98450 12390",
+      "rating": 4.9,
+      "reviewsCount": 350,
+      "services": ["Trade License (BBMP)", "GST", "Khatha Transfer", "FSSAI"],
+      "pricing": "₹300 - ₹850",
+      "operatingHours": "Mon-Sat: 9:30 AM - 7:00 PM",
+      "verifiedBy": "JustDial Verified Partner"
+    },
+    {
+      "id": "ka-2",
+      "name": "Silicon City Document Hub",
+      "city": "Bangalore South",
+      "area": "Jayanagar 4th Block, Bengaluru",
+      "address": "#45, 11th Main, Jayanagar 4th Block, Bengaluru - 560011",
+      "phone": "+91 99801 77654",
+      "rating": 4.8,
+      "reviewsCount": 230,
+      "services": ["Caste & Caste Income", "Domicile", "Birth Certificate", "Shop License"],
+      "pricing": "₹250 - ₹700",
+      "operatingHours": "Mon-Sat: 10:00 AM - 7:30 PM",
+      "verifiedBy": "JustDial Verified Partner"
+    }
+  ],
+  "tamil nadu": [
+    {
+      "id": "tn-1",
+      "name": "Madras Civic Facilitation Center",
+      "city": "Chennai Central",
+      "area": "Anna Salai & Mount Road, Chennai",
+      "address": "Suite 102, Spencer Plaza, Mount Road, Chennai - 600002",
+      "phone": "+91 98401 22890",
+      "rating": 4.9,
+      "reviewsCount": 310,
+      "services": ["Trade License (GCC)", "GST", "Patta & Chitta", "Shop License"],
+      "pricing": "₹300 - ₹800",
+      "operatingHours": "Mon-Sat: 9:30 AM - 7:00 PM",
+      "verifiedBy": "JustDial Verified Partner"
+    },
+    {
+      "id": "tn-2",
+      "name": "Coromandel Administrative Services",
+      "city": "Chennai South",
+      "area": "T. Nagar & Velachery, Chennai",
+      "address": "#14, Usman Road, T. Nagar, Chennai - 600017",
+      "phone": "+91 98840 55123",
+      "rating": 4.8,
+      "reviewsCount": 260,
+      "services": ["Community Certificate", "Nativity Certificate", "FSSAI Food License"],
+      "pricing": "₹250 - ₹650",
+      "operatingHours": "Mon-Sat: 10:00 AM - 7:30 PM",
+      "verifiedBy": "JustDial Verified Partner"
+    }
+  ],
+  "gujarat": [
+    {
+      "id": "gj-1",
+      "name": "Sabarmati Civic & License Agency",
+      "city": "Ahmedabad",
+      "area": "Ashram Road & Navrangpura, Ahmedabad",
+      "address": "Shop 22, City Center, Ashram Road, Ahmedabad - 380009",
+      "phone": "+91 98250 88912",
+      "rating": 4.9,
+      "reviewsCount": 290,
+      "services": ["Gumasta Shop License", "GST & Trade", "Food License", "Property Certificate"],
+      "pricing": "₹250 - ₹750",
+      "operatingHours": "Mon-Sat: 9:30 AM - 7:00 PM",
+      "verifiedBy": "JustDial Verified Partner"
+    },
+    {
+      "id": "gj-2",
+      "name": "Diamond City Documentation Center",
+      "city": "Surat",
+      "area": "Ring Road & Ghod Dod Road, Surat",
+      "address": "Office 304, Millennium Market, Ring Road, Surat - 395002",
+      "phone": "+91 98980 44321",
+      "rating": 4.8,
+      "reviewsCount": 210,
+      "services": ["Trade Permit (SMC)", "MSME Udyam", "Caste & Income Cert."],
+      "pricing": "₹200 - ₹600",
+      "operatingHours": "Mon-Sat: 10:00 AM - 7:30 PM",
+      "verifiedBy": "JustDial Verified Partner"
+    }
+  ]
+}

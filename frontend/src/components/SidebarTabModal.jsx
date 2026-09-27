@@ -1,5 +1,7 @@
 import { X, CheckCircle2, FileText, Download, Landmark, ExternalLink, ShieldCheck, HelpCircle, Phone } from 'lucide-react'
 
+import NearbyAgentsList from './NearbyAgentsList'
+
 // Flattens each step's documents into one deduplicated list for the whole
 // task. Handles both the real { name, tag } shape and a plain string
 // fallback (used by the pre-search placeholder roadmap).
@@ -137,6 +139,11 @@ function SidebarTabModal({
                       </div>
                     )
                   })}
+                </div>
+
+                {/* Nearby Documentation Agents Section */}
+                <div className="pt-4 border-t border-[#F0E6D8]">
+                  <NearbyAgentsList currentCity={cityName} />
                 </div>
               </>
             )}
