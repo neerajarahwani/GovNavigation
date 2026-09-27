@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
+import { Save, Tag, MapPin, FileText } from 'lucide-react'
 
-// Editable title/city/keywords for a task. Keywords are entered as
-// comma-separated text and split into an array on save — simple, good enough
-// for a hackathon admin tool.
 function AdminTaskEditForm({ task, onSave }) {
   const [title, setTitle] = useState('')
   const [city, setCity] = useState('')
@@ -30,41 +28,64 @@ function AdminTaskEditForm({ task, onSave }) {
   }
 
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-4">
-      <h3 className="mb-3 font-semibold text-slate-900">Task details</h3>
-      <div className="flex flex-col gap-3">
-        <label className="flex flex-col gap-1 text-sm">
-          Title
+    <div className="rounded-2xl border border-[#E5D9C8] bg-white p-6 shadow-civic-sm space-y-4">
+      <div className="flex items-center gap-2 border-b border-[#F0E6D8] pb-3">
+        <FileText className="h-4 w-4 text-[#C84B24]" />
+        <h3 className="font-serif-title font-bold text-[#1E293B] text-base">
+          Task Parameters & Metadata
+        </h3>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-[#1E293B] mb-1.5">
+            Process Title
+          </label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="rounded-md border border-slate-300 px-3 py-2"
+            className="w-full rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] px-3.5 py-2 text-xs text-[#1E293B] focus:bg-white focus:border-[#C84B24] focus:ring-4 focus:ring-[#C84B24]/10 focus:outline-none font-medium transition"
           />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          City
-          <input
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            className="rounded-md border border-slate-300 px-3 py-2"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          Keywords (comma-separated)
-          <input
-            value={keywordsText}
-            onChange={(e) => setKeywordsText(e.target.value)}
-            className="rounded-md border border-slate-300 px-3 py-2"
-          />
-        </label>
-        {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#1E293B] mb-1.5 flex items-center gap-1">
+              <MapPin className="h-3 w-3 text-[#C84B24]" />
+              City Jurisdiction
+            </label>
+            <input
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              className="w-full rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] px-3.5 py-2 text-xs text-[#1E293B] focus:bg-white focus:border-[#C84B24] focus:ring-4 focus:ring-[#C84B24]/10 focus:outline-none font-medium transition"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#1E293B] mb-1.5 flex items-center gap-1">
+              <Tag className="h-3 w-3 text-[#C84B24]" />
+              Keywords (comma-separated)
+            </label>
+            <input
+              value={keywordsText}
+              onChange={(e) => setKeywordsText(e.target.value)}
+              className="w-full rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] px-3.5 py-2 text-xs text-[#1E293B] focus:bg-white focus:border-[#C84B24] focus:ring-4 focus:ring-[#C84B24]/10 focus:outline-none font-medium transition"
+            />
+          </div>
+        </div>
+
+        {errorMessage && (
+          <p className="text-xs font-semibold text-red-600">{errorMessage}</p>
+        )}
+
         <button
           type="button"
           onClick={handleSave}
           disabled={isSaving}
-          className="w-fit rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="w-fit flex items-center gap-1.5 rounded-xl bg-[#C84B24] hover:bg-[#AF3C19] px-4 py-2.5 text-xs font-bold text-white shadow-xs disabled:opacity-50 transition"
         >
-          {isSaving ? 'Saving…' : 'Save task'}
+          <Save className="h-3.5 w-3.5" />
+          <span>{isSaving ? 'Saving Task...' : 'Save Task Metadata'}</span>
         </button>
       </div>
     </div>

@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
+import { CheckCircle, Save, ShieldCheck, Clock, Building, DollarSign } from 'lucide-react'
 
-// Editable step fields, plus a separate "Mark as verified" action — deliberately
-// distinct from Save, since editing a field and personally verifying it are
-// different claims (matches the backend contract's own separation).
 function AdminStepEditForm({ step, onSave, onVerify }) {
   const [form, setForm] = useState(step)
   const [errorMessage, setErrorMessage] = useState('')
@@ -53,103 +51,149 @@ function AdminStepEditForm({ step, onSave, onVerify }) {
     : form.prerequisites
 
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-4">
-      <h4 className="mb-3 font-semibold text-slate-900">{form.name}</h4>
-      <div className="grid grid-cols-2 gap-3 text-sm">
-        <label className="flex flex-col gap-1">
-          Name
+    <div className="rounded-2xl border border-[#E5D9C8] bg-white p-5 shadow-civic-sm space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#F0E6D8] pb-3">
+        <h4 className="font-serif-title font-bold text-[#1E293B] text-base">
+          {form.name}
+        </h4>
+        <div className="flex items-center gap-2">
+          {form.confidenceScore === 1 ? (
+            <span className="flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+              Verified Step
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-800">
+              Unverified
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1E293B] mb-1">
+            Step Name
+          </label>
           <input
             value={form.name || ''}
             onChange={(e) => setField('name', e.target.value)}
-            className="rounded-md border border-slate-300 px-2 py-1"
+            className="w-full rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] px-3 py-2 text-xs text-[#1E293B] focus:bg-white focus:border-[#C84B24] focus:ring-2 focus:ring-[#C84B24]/10 focus:outline-none font-medium"
           />
-        </label>
-        <label className="flex flex-col gap-1">
-          Department
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1E293B] mb-1 flex items-center gap-1">
+            <Building className="h-3 w-3 text-[#C84B24]" />
+            Department
+          </label>
           <input
             value={form.department || ''}
             onChange={(e) => setField('department', e.target.value)}
-            className="rounded-md border border-slate-300 px-2 py-1"
+            className="w-full rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] px-3 py-2 text-xs text-[#1E293B] focus:bg-white focus:border-[#C84B24] focus:ring-2 focus:ring-[#C84B24]/10 focus:outline-none font-medium"
           />
-        </label>
-        <label className="flex flex-col gap-1">
-          Fees
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1E293B] mb-1 flex items-center gap-1">
+            <DollarSign className="h-3 w-3 text-[#C84B24]" />
+            Fees
+          </label>
           <input
             value={form.fees || ''}
             onChange={(e) => setField('fees', e.target.value)}
-            className="rounded-md border border-slate-300 px-2 py-1"
+            className="w-full rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] px-3 py-2 text-xs text-[#1E293B] focus:bg-white focus:border-[#C84B24] focus:ring-2 focus:ring-[#C84B24]/10 focus:outline-none font-medium"
           />
-        </label>
-        <label className="flex flex-col gap-1">
-          Estimated days
+        </div>
+
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1E293B] mb-1 flex items-center gap-1">
+            <Clock className="h-3 w-3 text-[#C84B24]" />
+            Estimated Days
+          </label>
           <input
             type="number"
             value={form.estimatedDays ?? ''}
             onChange={(e) => setField('estimatedDays', e.target.value)}
-            className="rounded-md border border-slate-300 px-2 py-1"
+            className="w-full rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] px-3 py-2 text-xs text-[#1E293B] focus:bg-white focus:border-[#C84B24] focus:ring-2 focus:ring-[#C84B24]/10 focus:outline-none font-medium"
           />
-        </label>
-        <label className="col-span-2 flex flex-col gap-1">
-          Eligibility
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1E293B] mb-1">
+            Eligibility
+          </label>
           <input
             value={form.eligibility || ''}
             onChange={(e) => setField('eligibility', e.target.value)}
-            className="rounded-md border border-slate-300 px-2 py-1"
+            className="w-full rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] px-3 py-2 text-xs text-[#1E293B] focus:bg-white focus:border-[#C84B24] focus:ring-2 focus:ring-[#C84B24]/10 focus:outline-none font-medium"
           />
-        </label>
-        <label className="col-span-2 flex flex-col gap-1">
-          Documents (comma-separated)
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1E293B] mb-1">
+            Required Documents (comma-separated)
+          </label>
           <input
             value={documentsText || ''}
             onChange={(e) => setField('documents', e.target.value)}
-            className="rounded-md border border-slate-300 px-2 py-1"
+            className="w-full rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] px-3 py-2 text-xs text-[#1E293B] focus:bg-white focus:border-[#C84B24] focus:ring-2 focus:ring-[#C84B24]/10 focus:outline-none font-medium"
           />
-        </label>
-        <label className="col-span-2 flex flex-col gap-1">
-          Prerequisites (comma-separated)
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1E293B] mb-1">
+            Prerequisites (comma-separated)
+          </label>
           <input
             value={prerequisitesText || ''}
             onChange={(e) => setField('prerequisites', e.target.value)}
-            className="rounded-md border border-slate-300 px-2 py-1"
+            className="w-full rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] px-3 py-2 text-xs text-[#1E293B] focus:bg-white focus:border-[#C84B24] focus:ring-2 focus:ring-[#C84B24]/10 focus:outline-none font-medium"
           />
-        </label>
-        <label className="col-span-2 flex flex-col gap-1">
-          Source URL
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1E293B] mb-1">
+            Source URL
+          </label>
           <input
             value={form.sourceUrl || ''}
             onChange={(e) => setField('sourceUrl', e.target.value)}
-            className="rounded-md border border-slate-300 px-2 py-1"
+            className="w-full rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] px-3 py-2 text-xs text-[#1E293B] focus:bg-white focus:border-[#C84B24] focus:ring-2 focus:ring-[#C84B24]/10 focus:outline-none font-medium"
           />
-        </label>
+        </div>
       </div>
 
-      <div className="mt-2 text-xs text-slate-400">
-        Depends on: {(step.dependsOn || []).length > 0 ? step.dependsOn.join(', ') : 'none'} —
-        read-only here (edit via the backend if needed)
-      </div>
-      <div className="mt-1 text-xs text-slate-500">
-        Confidence: {form.confidenceScore} · Last verified:{' '}
-        {form.lastVerified ? new Date(form.lastVerified).toLocaleString() : 'never'}
+      <div className="rounded-xl border border-[#F0E6D8] bg-[#FAF7F2] p-3 text-[11px] text-[#64748B] flex flex-wrap items-center justify-between gap-2">
+        <span>
+          <strong>Depends on:</strong> {(step.dependsOn || []).length > 0 ? step.dependsOn.join(', ') : 'None'}
+        </span>
+        <span>
+          <strong>Confidence:</strong> {form.confidenceScore} · <strong>Last verified:</strong>{' '}
+          {form.lastVerified ? new Date(form.lastVerified).toLocaleString() : 'Never'}
+        </span>
       </div>
 
-      {errorMessage && <p className="mt-2 text-sm text-red-600">{errorMessage}</p>}
+      {errorMessage && <p className="text-xs font-semibold text-red-600">{errorMessage}</p>}
 
-      <div className="mt-3 flex gap-2">
+      <div className="flex gap-2.5 pt-1">
         <button
           type="button"
           onClick={handleSave}
           disabled={isSaving}
-          className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-xl bg-[#C84B24] hover:bg-[#AF3C19] px-4 py-2 text-xs font-bold text-white shadow-xs disabled:opacity-50 transition"
         >
-          {isSaving ? 'Saving…' : 'Save'}
+          <Save className="h-3.5 w-3.5" />
+          <span>{isSaving ? 'Saving…' : 'Save Changes'}</span>
         </button>
         <button
           type="button"
           onClick={handleVerify}
           disabled={isVerifying}
-          className="rounded-md bg-green-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 px-4 py-2 text-xs font-bold text-white shadow-xs disabled:opacity-50 transition"
         >
-          {isVerifying ? 'Verifying…' : 'Mark as verified'}
+          <CheckCircle className="h-3.5 w-3.5" />
+          <span>{isVerifying ? 'Verifying…' : 'Mark as Verified'}</span>
         </button>
       </div>
     </div>
