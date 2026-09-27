@@ -1,137 +1,176 @@
 import { useState } from 'react'
-import jsPDF from 'jspdf'
-// Using html2canvas-pro, not html2canvas — the original doesn't understand
-// modern CSS color functions like oklch(), which Tailwind CSS v4 uses
-// throughout its default palette, and silently fails to capture anything.
-import html2canvas from 'html2canvas-pro'
+import { FileDown, Loader2 } from 'lucide-react'
 
-// jsPDF's built-in fonts don't support the ₹ (Indian Rupee) character — it
-// renders as a garbled superscript glyph and throws off the whole line's
-// spacing. Swap it for plain "Rs." before any text reaches jsPDF.
-function sanitizeForPdf(text) {
-  return typeof text === 'string' ? text.replace(/₹/g, 'Rs. ') : text
-}
+function ExportPdfButton({ taskName, city, steps }) {
+  const [isExporting, setIsExporting] = useState(false)
 
-// Finds each canRunParallelWith pair once (not twice, once from each side).
-function findParallelPairs(steps) {
-  const byId = new Map(steps.map((s) => [s.stepId, s]))
-  const pairs = []
-  for (const step of steps) {
-    for (const partnerId of step.canRunParallelWith || []) {
-      const partner = byId.get(String(partnerId))
-      if (partner && step.stepId < partner.stepId) {
-        pairs.push([step.name, partner.name])
-      }
-    }
-  }
-  return pairs
-}
+  async function handleExport() {
+    if (!steps || steps.length === 0) return
+    setIsExporting(true)
 
-// Downloads the currently-visible roadmap (graph image + step details) as a
-// PDF. Reads whatever's already on screen — no new backend call, and it
-// naturally reflects any document-shortcut filtering already applied.
-function ExportPdfButton({ task, steps }) {
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
-
-  async function handleDownload() {
-    setIsGenerating(true)
-    setErrorMessage('')
     try {
+      const html2canvas = (await import('html2canvas-pro')).default
+      const { jsPDF } = await import('jspdf')
+
       const graphEl = document.getElementById('roadmap-graph-capture')
-      const doc = new jsPDF({ unit: 'pt', format: 'a4' })
-      const pageWidth = doc.internal.pageSize.getWidth() - 80
 
-      doc.setFontSize(16)
-      doc.text(task.title, 40, 40)
-      doc.setFontSize(11)
-      doc.text(task.city, 40, 58)
-
-      let cursorY = 80
+      let canvas = null
       if (graphEl) {
-        const canvas = await html2canvas(graphEl)
+        canvas = await html2canvas(graphEl, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#f8fafc',
+          logging: false,
+        })
+      }
+
+      const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
+      const margin = 15
+      const contentWidth = pageWidth - margin * 2
+      let y = margin
+
+      // Header Banner
+      doc.setFillColor(79, 70, 229) // Indigo-600
+      doc.rect(0, 0, pageWidth, 28, 'F')
+
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(18)
+      doc.setFont('helvetica', 'bold')
+      doc.text('CivicPath - Government Action Plan', margin, 18)
+
+      y = 36
+
+      // Title & Subtitle
+      doc.setTextColor(15, 23, 42)
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.text(`Service: ${taskName || 'Custom Civic Process'}`, margin, y)
+      y += 6
+
+      if (city) {
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(100, 116, 139)
+        doc.text(`Location: ${city}`, margin, y)
+        y += 6
+      }
+
+      doc.setDrawColor(226, 232, 240)
+      doc.setLineWidth(0.5)
+      doc.line(margin, y, pageWidth - margin, y)
+      y += 8
+
+      // Flowchart Image
+      if (canvas) {
         const imgData = canvas.toDataURL('image/png')
-        const imgHeight = (canvas.height / canvas.width) * pageWidth
-        doc.addImage(imgData, 'PNG', 40, cursorY, pageWidth, imgHeight)
-        cursorY += imgHeight + 14
+        const imgWidth = contentWidth
+        const imgHeight = (canvas.height * imgWidth) / canvas.width
 
-        // Explain how to read the diagram — solid arrows vs. the dashed
-        // parallel connector — right under the image itself.
-        doc.setFontSize(9)
-        doc.setTextColor(100)
-        doc.text(
-          'How to read this: a dark gray arrow means "finish this step, then do the next ' +
-            'one." A green dashed line means the two connected steps can be done at the same time.',
-          40,
-          cursorY,
-          { maxWidth: pageWidth }
-        )
-        doc.setTextColor(0)
-        cursorY += 26
-      }
-
-      const parallelPairs = findParallelPairs(steps)
-      if (parallelPairs.length > 0) {
-        doc.setFontSize(12)
-        doc.text('Steps you can do at the same time:', 40, cursorY)
-        cursorY += 16
-        doc.setFontSize(10)
-        for (const [a, b] of parallelPairs) {
-          doc.text(`- ${a}  +  ${b}`, 48, cursorY, { maxWidth: pageWidth - 8 })
-          cursorY += 14
-        }
-        cursorY += 10
-      }
-
-      for (const step of steps) {
-        if (cursorY > doc.internal.pageSize.getHeight() - 100) {
+        if (y + imgHeight > pageHeight - margin) {
           doc.addPage()
-          cursorY = 40
+          y = margin
         }
-        const hasRealSource = typeof step.sourceUrl === 'string' && step.sourceUrl.startsWith('http')
 
-        doc.setFontSize(13)
-        doc.text(sanitizeForPdf(step.name), 40, cursorY)
-        cursorY += 16
-
-        doc.setFontSize(10)
-        const lines = [
-          `Department: ${step.department || 'Not specified'}`,
-          `Documents: ${(step.documents || []).join(', ') || 'Not specified'}`,
-          `Fees: ${sanitizeForPdf(step.fees) || 'Not specified'}`,
-          `Eligibility: ${step.eligibility || 'Not specified'}`,
-          `Estimated time: ${step.estimatedDays ? `${step.estimatedDays} day(s)` : 'Not specified'}`,
-          `Source: ${hasRealSource ? step.sourceUrl : 'Not yet verified'}`,
-        ]
-        for (const line of lines) {
-          doc.text(sanitizeForPdf(line), 40, cursorY, { maxWidth: pageWidth })
-          cursorY += 14
-        }
-        cursorY += 10
+        doc.addImage(imgData, 'PNG', margin, y, imgWidth, imgHeight)
+        y += imgHeight + 10
       }
 
-      const filename = `${task.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-roadmap.pdf`
-      doc.save(filename)
+      // Steps Listing
+      doc.setFontSize(13)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(15, 23, 42)
+
+      if (y + 10 > pageHeight - margin) {
+        doc.addPage()
+        y = margin
+      }
+
+      doc.text('Detailed Step Checklist & Information', margin, y)
+      y += 8
+
+      steps.forEach((s, idx) => {
+        const blockHeight = 30
+        if (y + blockHeight > pageHeight - margin) {
+          doc.addPage()
+          y = margin
+        }
+
+        // Step card background
+        doc.setFillColor(248, 250, 252)
+        doc.roundedRect(margin, y, contentWidth, 24, 2, 2, 'F')
+        doc.setDrawColor(226, 232, 240)
+        doc.roundedRect(margin, y, contentWidth, 24, 2, 2, 'D')
+
+        doc.setFontSize(11)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(30, 41, 59)
+        doc.text(`${idx + 1}. ${s.name}`, margin + 4, y + 7)
+
+        doc.setFontSize(9)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(100, 116, 139)
+
+        const dept = s.department ? `Department: ${s.department}` : ''
+        const days = s.estimatedDays ? `Est. Time: ${s.estimatedDays} day(s)` : ''
+        const fee = s.fees ? `Fees: ${s.fees}` : ''
+        const metaLine = [dept, days, fee].filter(Boolean).join('  |  ')
+
+        if (metaLine) {
+          doc.text(metaLine, margin + 4, y + 13)
+        }
+
+        if (s.documents && s.documents.length > 0) {
+          doc.text(`Required Documents: ${s.documents.join(', ')}`, margin + 4, y + 19)
+        }
+
+        y += 28
+      })
+
+      // Footer
+      const totalPages = doc.internal.getNumberOfPages()
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i)
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(148, 163, 184)
+        doc.text(
+          `CivicPath Government Navigator - Page ${i} of ${totalPages}`,
+          pageWidth / 2,
+          pageHeight - 8,
+          { align: 'center' }
+        )
+      }
+
+      const fileName = `CivicPath_${(taskName || 'Roadmap').replace(/\s+/g, '_')}.pdf`
+      doc.save(fileName)
     } catch (err) {
-      setErrorMessage('Could not generate the PDF — please try again.')
-      console.error('PDF export failed:', err)
+      console.error('Failed to generate PDF:', err)
     } finally {
-      setIsGenerating(false)
+      setIsExporting(false)
     }
   }
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <button
-        type="button"
-        onClick={handleDownload}
-        disabled={isGenerating}
-        className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
-      >
-        {isGenerating ? 'Generating…' : 'Download as PDF'}
-      </button>
-      {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
-    </div>
+    <button
+      type="button"
+      onClick={handleExport}
+      disabled={isExporting}
+      className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-600/20 hover:from-indigo-700 hover:to-cyan-700 disabled:opacity-50 transition active:scale-95"
+    >
+      {isExporting ? (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Generating PDF Report…</span>
+        </>
+      ) : (
+        <>
+          <FileDown className="h-4 w-4" />
+          <span>Download PDF Action Plan</span>
+        </>
+      )}
+    </button>
   )
 }
 

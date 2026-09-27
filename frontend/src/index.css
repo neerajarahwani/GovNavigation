@@ -1,5 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&family=Lora:ital,wght@0,600;0,700;1,500&display=swap');
 @import "tailwindcss";
 
-body {
-  margin: 0;
+:root {
+  --bg-warm-cream: #FAF7F2;
+  --bg-card-cream: #FFFFFF;
+  --bg-card-tan: #F7F1E5;
+  --border-warm: #EBE1D3;
+  --border-active-terracotta: #C84B24;
+  --terracotta-primary: #C84B24;
+  --terracotta-hover: #AF3C19;
+  --navy-dark: #1E293B;
+  --green-completed: #166534;
+  --green-bg: #F0FDF4;
 }
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #FAF7F2;
+  color: #1E293B;
+  overflow-x: hidden;
+}
+
+.font-serif-title {
+  font-family: 'Lora', 'Playfair Display', Georgia, serif;
+}
+
+@layer utilities {
+  .bg-civic-cream {
+    background-color: #FAF7F2;
+  }
+  .bg-civic-card {
+    background-color: #FFFFFF;
+  }
+  .bg-civic-tan {
+    background-color: #F8F3EA;
+  }
+  .bg-civic-terracotta {
+    background-color: #C84B24;
+  }
+  .text-civic-terracotta {
+    color: #C84B24;
+  }
+  .border-civic-warm {
+    border-color: #E8DEC9;
+  }
+  .border-civic-terracotta {
+    border-color: #C84B24;
+  }
+
+  .bg-grid-pattern-light {
+    background-image: radial-gradient(rgba(200, 75, 36, 0.07) 1.5px, transparent 1.5px);
+    background-size: 32px 32px;
+  }
+
+  .shadow-civic-sm {
+    box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
+  }
+
+  .shadow-civic-md {
+    box-shadow: 0 4px 20px rgba(30, 41, 59, 0.08);
+  }
+
+  .shadow-civic-lg {
+    box-shadow: 0 10px 30px rgba(200, 75, 36, 0.12);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.03); }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FAF7F2;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D8CBB7;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #BFAEA0;
+}
+

@@ -1,264 +1,408 @@
-import ReactFlow, { Background, Controls, Position, MarkerType, Handle } from 'reactflow'
-import 'reactflow/dist/style.css'
+import { useState } from 'react'
+import {
+  CheckCircle2,
+  FileText,
+  Building2,
+  Flag,
+  ChevronRight,
+  GitFork,
+  List,
+  Sparkles,
+  Palette,
+  Check
+} from 'lucide-react'
 
-const COLUMN_SPACING_X = 280
-const ROW_SPACING_Y = 110
-
-// A step box with 4 separate connection points: left/right for the normal
-// "do this, then that" flow, and top/bottom just for the "can be done
-// together" connector between two steps stacked in the same column. Without
-// separate top/bottom points, that connector would have to loop around from
-// the default side handles and render hidden behind the boxes.
-function StepNode({ data }) {
-  return (
-    <div
-      style={{
-        border: '1px solid #cbd5e1',
-        borderRadius: 8,
-        padding: 10,
-        background: 'white',
-        cursor: 'pointer',
-        width: 220,
-      }}
-    >
-      <Handle type="target" position={Position.Left} id="left" />
-      <Handle type="source" position={Position.Right} id="right" />
-      <Handle type="target" position={Position.Top} id="top" style={{ opacity: 0 }} />
-      <Handle type="source" position={Position.Bottom} id="bottom" style={{ opacity: 0 }} />
-      {data.label}
-    </div>
-  )
+// Defined Color Combination Palettes for the Flowchart
+export const FLOW_PALETTES = {
+  terracotta: {
+    name: 'Civic Terracotta',
+    primary: '#C84B24',
+    primaryBg: '#FFF4F0',
+    primaryBorder: '#C84B24',
+    completedBg: '#F0FDF4',
+    completedBorder: '#166534',
+    completedIcon: '#166534',
+    cardBg: '#FFFFFF',
+    cardBorder: '#E5D9C8',
+    connector: '#94A3B8',
+    badgeBg: '#E05628',
+    badgeText: '#FFFFFF',
+  },
+  emerald: {
+    name: 'Emerald Civic',
+    primary: '#059669',
+    primaryBg: '#ECFDF5',
+    primaryBorder: '#059669',
+    completedBg: '#F0FDF4',
+    completedBorder: '#166534',
+    completedIcon: '#166534',
+    cardBg: '#FFFFFF',
+    cardBorder: '#D1FAE5',
+    connector: '#6EE7B7',
+    badgeBg: '#047857',
+    badgeText: '#FFFFFF',
+  },
+  indigo: {
+    name: 'Modern Indigo',
+    primary: '#4F46E5',
+    primaryBg: '#EEF2FF',
+    primaryBorder: '#4F46E5',
+    completedBg: '#F0FDF4',
+    completedBorder: '#166534',
+    completedIcon: '#166534',
+    cardBg: '#FFFFFF',
+    cardBorder: '#E0E7FF',
+    connector: '#818CF8',
+    badgeBg: '#4338CA',
+    badgeText: '#FFFFFF',
+  },
+  amber: {
+    name: 'Warm Amber',
+    primary: '#D97706',
+    primaryBg: '#FFFBEB',
+    primaryBorder: '#D97706',
+    completedBg: '#F0FDF4',
+    completedBorder: '#166534',
+    completedIcon: '#166534',
+    cardBg: '#FFFFFF',
+    cardBorder: '#FDE68A',
+    connector: '#FBBF24',
+    badgeBg: '#B45309',
+    badgeText: '#FFFFFF',
+  },
 }
 
-const nodeTypes = { step: StepNode }
+function RoadmapGraph({
+  steps = [],
+  onStepSelect,
+  selectedStepId,
+  completedStepIds = [],
+}) {
+  const [viewMode, setViewMode] = useState('flow') // 'flow' | 'list'
+  const [activePalette, setActivePalette] = useState('terracotta')
+  const [showColorMenu, setShowColorMenu] = useState(false)
 
-// Assigns each step a column based on dependency depth (how many steps must
-// happen before it), then merges canRunParallelWith pairs into the same
-// column, so explicitly-linked parallel steps always land side by side even in
-// the rare case dependency depth alone wouldn't have put them there.
-function computeColumns(steps) {
-  const column = new Map()
+  const palette = FLOW_PALETTES[activePalette] || FLOW_PALETTES.terracotta
 
-  // Base pass — steps arrive in dependency order, so each step's dependsOn
-  // targets already have a column by the time we reach it.
-  for (const step of steps) {
-    const depColumns = (step.dependsOn || []).map((depId) => column.get(String(depId)) ?? 0)
-    column.set(step.stepId, depColumns.length > 0 ? Math.max(...depColumns) + 1 : 0)
+  // Helper to determine step status
+  const getStepStatus = (stepId, index) => {
+    if (completedStepIds.includes(stepId)) return 'completed'
+    if (selectedStepId === stepId || (selectedStepId === null && index === 1))
+      return 'active'
+    return 'upcoming'
   }
 
-  // Merge canRunParallelWith pairs into the same column. Repeat until stable —
-  // a step can be linked to more than one partner.
-  let changed = true
-  while (changed) {
-    changed = false
-    for (const step of steps) {
-      for (const partnerId of step.canRunParallelWith || []) {
-        const a = column.get(step.stepId)
-        const b = column.get(String(partnerId))
-        if (b === undefined) continue
-        const merged = Math.max(a, b)
-        if (a !== merged) {
-          column.set(step.stepId, merged)
-          changed = true
+  // Get icon for step type
+  const getStepIcon = (step, status) => {
+    if (status === 'completed') {
+      return (
+        <div className="h-7 w-7 rounded-full bg-[#166534] text-white flex items-center justify-center shrink-0 shadow-2xs">
+          <Check className="h-4 w-4 stroke-[3]" />
+        </div>
+      )
+    }
+
+    if (
+      step.name.toLowerCase().includes('department') ||
+      step.name.toLowerCase().includes('shop') ||
+      step.department
+    ) {
+      return (
+        <div
+          className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 border transition-colors"
+          style={
+            status === 'active'
+              ? { backgroundColor: palette.primary, color: '#FFFFFF', borderColor: palette.primary }
+              : { backgroundColor: '#FAF7F2', color: palette.primary, borderColor: '#EBE1D3' }
+          }
+        >
+          <Building2 className="h-4 w-4" />
+        </div>
+      )
+    }
+
+    if (step.name.toLowerCase().includes('start operations') || step.stepId === 's8') {
+      return (
+        <div
+          className="h-7 w-7 rounded-lg bg-[#FAF7F2] border border-[#EBE1D3] flex items-center justify-center shrink-0"
+          style={{ color: palette.primary }}
+        >
+          <Flag className="h-4 w-4 fill-current" />
+        </div>
+      )
+    }
+
+    return (
+      <div
+        className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 border transition-colors"
+        style={
+          status === 'active'
+            ? { backgroundColor: palette.primary, color: '#FFFFFF', borderColor: palette.primary }
+            : { backgroundColor: '#FAF7F2', color: palette.primary, borderColor: '#EBE1D3' }
         }
-        if (b !== merged) {
-          column.set(String(partnerId), merged)
-          changed = true
-        }
+      >
+        <FileText className="h-4 w-4" />
+      </div>
+    )
+  }
+
+  // Helper render card
+  const renderStepCard = (step, index) => {
+    const status = getStepStatus(step.stepId, index)
+    const isSelected = selectedStepId === step.stepId
+
+    let style = {
+      borderColor: '#E5D9C8',
+      backgroundColor: '#FFFFFF',
+    }
+
+    if (status === 'completed') {
+      style = {
+        borderColor: '#166534',
+        backgroundColor: '#F0FDF4',
+      }
+    } else if (status === 'active') {
+      style = {
+        borderColor: palette.primaryBorder,
+        backgroundColor: palette.primaryBg,
+        boxShadow: `0 0 0 3px ${palette.primary}20`,
       }
     }
+
+    if (isSelected) {
+      style.transform = 'scale(1.01)'
+      style.boxShadow = `0 4px 12px ${palette.primary}25`
+    }
+
+    return (
+      <div
+        key={step.stepId}
+        onClick={() => onStepSelect(step)}
+        style={style}
+        className="relative cursor-pointer rounded-xl border p-3.5 transition-all duration-200"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {getStepIcon(step, status)}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="text-sm font-bold text-[#1E293B] truncate">
+                  {step.name}
+                </h4>
+                {status === 'active' && (
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-2xs"
+                    style={{ backgroundColor: palette.badgeBg }}
+                  >
+                    Current Step
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-[#64748B] truncate mt-0.5 font-medium">
+                {step.subtitle || step.department || 'Understand requirements & complete procedures'}
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-[#94A3B8] shrink-0" />
+        </div>
+      </div>
+    )
   }
 
-  return column
-}
-
-// Turns an ordered step list into React Flow nodes (grouped into columns by
-// dependency depth, with canRunParallelWith steps forced into the same
-// column) and edges: solid arrowed ones for dependsOn, dashed green ones for
-// canRunParallelWith.
-function buildGraph(steps) {
-  const column = computeColumns(steps)
-  const rowInColumn = new Map() // column -> how many nodes already placed there
-  const rowOf = new Map() // stepId -> its row, needed to order the parallel connector
-
-  const nodes = steps.map((step) => {
-    const col = column.get(step.stepId)
-    const row = rowInColumn.get(col) || 0
-    rowInColumn.set(col, row + 1)
-    rowOf.set(step.stepId, row)
-
-    return {
-      id: step.stepId,
-      type: 'step',
-      position: { x: col * COLUMN_SPACING_X, y: row * ROW_SPACING_Y },
-      data: { label: step.name },
-    }
-  })
-
-  // "Do this, then that" edges — a solid, dark, right-angle line with a clear
-  // arrowhead pointing at the step that comes next. smoothstep routing (right
-  // angles, not a diagonal) keeps multiple crossing edges readable instead of
-  // turning into an "X" of diagonal lines.
-  const dependsOnEdges = steps.flatMap((step) =>
-    (step.dependsOn || []).map((depId) => ({
-      id: `dep-${depId}-${step.stepId}`,
-      source: String(depId),
-      sourceHandle: 'right',
-      target: step.stepId,
-      targetHandle: 'left',
-      type: 'smoothstep',
-      animated: false,
-      style: { stroke: '#475569', strokeWidth: 2 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#475569', width: 18, height: 18 },
-    }))
+  // Identify parallel nodes (Steps 5 & 6)
+  const mainLinearSteps = steps.filter(
+    (s) => s.stepId !== 's5' && s.stepId !== 's6'
   )
+  const parallelStep5 = steps.find((s) => s.stepId === 's5' || s.stepId === 5)
+  const parallelStep6 = steps.find((s) => s.stepId === 's6' || s.stepId === 6)
 
-  // "Can be done together" connector — a straight vertical line from the
-  // bottom of whichever step is higher up to the top of whichever is lower,
-  // since a merged column always stacks them directly above/below each
-  // other. Deliberately green and dashed, no arrowhead (it isn't a
-  // direction, just a link). Only added once per pair (when this step's id
-  // sorts first) so the same pair isn't drawn twice from each side.
-  const parallelEdges = steps.flatMap((step) =>
-    (step.canRunParallelWith || [])
-      .filter((partnerId) => step.stepId < String(partnerId))
-      .map((partnerId) => {
-        const partnerIdStr = String(partnerId)
-        const [upperId, lowerId] =
-          rowOf.get(step.stepId) <= rowOf.get(partnerIdStr)
-            ? [step.stepId, partnerIdStr]
-            : [partnerIdStr, step.stepId]
-        return {
-          id: `parallel-${step.stepId}-${partnerId}`,
-          source: upperId,
-          sourceHandle: 'bottom',
-          target: lowerId,
-          targetHandle: 'top',
-          type: 'straight',
-          animated: false,
-          style: { strokeDasharray: '6,6', stroke: '#16a34a', strokeWidth: 2 },
-          label: 'can be done together',
-          labelStyle: { fill: '#15803d', fontSize: 11, fontWeight: 600 },
-          labelBgStyle: { fill: '#f0fdf4' },
-        }
-      })
+  const stepsBeforeSplit = mainLinearSteps.filter(
+    (s, idx) => idx < 4 || (s.stepId !== 's7' && s.stepId !== 's8' && idx < 4)
   )
-
-  return { nodes, edges: [...dependsOnEdges, ...parallelEdges] }
-}
-
-// Finds each canRunParallelWith pair once (not twice, once from each side) —
-// used for the plain-text "can be done together" list under the graph.
-function findParallelPairs(steps) {
-  const byId = new Map(steps.map((s) => [s.stepId, s]))
-  const pairs = []
-  for (const step of steps) {
-    for (const partnerId of step.canRunParallelWith || []) {
-      const partner = byId.get(String(partnerId))
-      if (partner && step.stepId < partner.stepId) {
-        pairs.push([step.name, partner.name])
-      }
-    }
-  }
-  return pairs
-}
-
-// Sums estimatedDays across steps that have a real number set, skipping the rest.
-function sumEstimatedDays(steps) {
-  return steps.reduce((total, step) => {
-    return typeof step.estimatedDays === 'number' ? total + step.estimatedDays : total
-  }, 0)
-}
-
-// Pulls the first number out of each step's free-text fees string and sums
-// what's parseable, plus how many steps that covered (for an honest label).
-function sumApproxFees(steps) {
-  let total = 0
-  let matchedCount = 0
-  for (const step of steps) {
-    const match = typeof step.fees === 'string' ? step.fees.match(/\d+/) : null
-    if (match) {
-      total += Number(match[0])
-      matchedCount += 1
-    }
-  }
-  return { total, matchedCount }
-}
-
-function RoadmapGraph({ steps, onStepSelect, completedStepIds = [] }) {
-  const { nodes, edges } = buildGraph(steps)
-
-  function handleNodeClick(_event, node) {
-    const step = steps.find((s) => s.stepId === node.id)
-    if (step) onStepSelect(step)
-  }
-
-  const completedCount = steps.filter((s) => completedStepIds.includes(s.stepId)).length
-  const totalSteps = steps.length
-  const percentage = totalSteps > 0 ? Math.round((completedCount / totalSteps) * 100) : 0
-
-  const totalDays = sumEstimatedDays(steps)
-  const { total: feeTotal, matchedCount: feeMatchedCount } = sumApproxFees(steps)
-  const parallelPairs = findParallelPairs(steps)
+  const stepsAfterMerge = mainLinearSteps.filter(
+    (s) => s.stepId === 's7' || s.stepId === 's8' || steps.indexOf(s) >= 6
+  )
 
   return (
-    <div className="w-full max-w-4xl">
-      {(totalDays > 0 || feeMatchedCount > 0) && (
-        <div className="mb-2 flex flex-wrap gap-x-4 text-sm text-slate-700">
-          {totalDays > 0 && <span>Estimated total time: {totalDays} day(s)</span>}
-          {feeMatchedCount > 0 && (
-            <span>
-              Approx. total fees: ₹{feeTotal} (based on {feeMatchedCount} of {totalSteps} steps)
-            </span>
+    <div className="w-full rounded-2xl bg-white p-5 shadow-civic-sm border border-[#E5D9C8]">
+      {/* Container Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#F0E6D8] pb-4 mb-5">
+        <div>
+          <h3 className="text-xl font-serif-title font-bold text-[#1E293B] tracking-tight">
+            Your Roadmap
+          </h3>
+          <p className="text-xs text-[#64748B] font-medium mt-0.5">
+            A step-by-step guide to start a business in Maharashtra
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Color combination switcher pill */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowColorMenu(!showColorMenu)}
+              className="flex items-center gap-1.5 rounded-lg border border-[#EBE1D3] bg-[#FAF7F2] px-3 py-1.5 text-xs font-bold text-[#1E293B] hover:bg-[#F3EBE0] transition"
+              title="Change Flowchart Color Combination"
+            >
+              <Palette className="h-3.5 w-3.5" style={{ color: palette.primary }} />
+              <span className="hidden xs:inline">{palette.name}</span>
+            </button>
+
+            {showColorMenu && (
+              <div className="absolute right-0 top-10 w-44 rounded-xl border border-[#E5D9C8] bg-white p-2 shadow-lg z-30 space-y-1">
+                <p className="text-[10px] font-bold text-[#94A3B8] px-2 py-1 uppercase tracking-wider">
+                  Color Themes
+                </p>
+                {Object.entries(FLOW_PALETTES).map(([key, pal]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => {
+                      setActivePalette(key)
+                      setShowColorMenu(false)
+                    }}
+                    className={`w-full flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
+                      activePalette === key
+                        ? 'bg-[#FAF7F2] font-bold'
+                        : 'text-[#1E293B] hover:bg-slate-50'
+                    }`}
+                    style={activePalette === key ? { color: pal.primary } : {}}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="h-3 w-3 rounded-full border border-black/10"
+                        style={{ backgroundColor: pal.primary }}
+                      />
+                      <span>{pal.name}</span>
+                    </div>
+                    {activePalette === key && (
+                      <Check className="h-3.5 w-3.5" style={{ color: pal.primary }} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* View Toggle */}
+          <div className="flex items-center rounded-xl bg-[#F4EFE6] p-1 border border-[#EBE1D3]">
+            <button
+              type="button"
+              onClick={() => setViewMode('flow')}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                viewMode === 'flow'
+                  ? 'bg-[#1E293B] text-white shadow-2xs'
+                  : 'text-[#64748B] hover:text-[#1E293B]'
+              }`}
+            >
+              <GitFork className="h-3.5 w-3.5" />
+              <span>Flow View</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                viewMode === 'list'
+                  ? 'bg-[#1E293B] text-white shadow-2xs'
+                  : 'text-[#64748B] hover:text-[#1E293B]'
+              }`}
+            >
+              <List className="h-3.5 w-3.5" />
+              <span>List View</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* FLOW VIEW DIAGRAM */}
+      {viewMode === 'flow' && (
+        <div className="flex flex-col items-center w-full max-w-xl mx-auto py-2 space-y-2">
+          {/* Initial Linear Steps (Steps 1 to 4) */}
+          {stepsBeforeSplit.map((step, idx) => (
+            <div key={step.stepId} className="w-full flex flex-col items-center">
+              <div className="w-full">{renderStepCard(step, idx + 1)}</div>
+
+              {/* Connector Arrow Down */}
+              {idx < stepsBeforeSplit.length - 1 && (
+                <div className="h-6 flex items-center justify-center my-0.5">
+                  <svg className="h-6 w-4 stroke-[#1E293B]" viewBox="0 0 16 24">
+                    <line x1="8" y1="0" x2="8" y2="18" strokeWidth="2" stroke={palette.connector} />
+                    <polygon points="4,16 8,24 12,16" fill={palette.connector} />
+                  </svg>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Connector Arrow Down into Split Branch */}
+          {(parallelStep5 || parallelStep6) && (
+            <div className="h-8 flex items-center justify-center w-full my-0.5">
+              <svg className="h-8 w-full max-w-md fill-none" viewBox="0 0 300 32">
+                {/* Center stem down */}
+                <line x1="150" y1="0" x2="150" y2="12" strokeWidth="2" stroke={palette.connector} />
+                {/* Horizontal split bar */}
+                <line x1="75" y1="12" x2="225" y2="12" strokeWidth="2" stroke={palette.connector} />
+                {/* Left branch down */}
+                <line x1="75" y1="12" x2="75" y2="24" strokeWidth="2" stroke={palette.connector} />
+                <polygon points="71,22 75,30 79,22" fill={palette.connector} stroke="none" />
+                {/* Right branch down */}
+                <line x1="225" y1="12" x2="225" y2="24" strokeWidth="2" stroke={palette.connector} />
+                <polygon points="221,22 225,30 229,22" fill={palette.connector} stroke="none" />
+              </svg>
+            </div>
           )}
+
+          {/* Parallel Side-By-Side Nodes (Steps 5 & 6) */}
+          {(parallelStep5 || parallelStep6) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+              {parallelStep5 && renderStepCard(parallelStep5, 5)}
+              {parallelStep6 && renderStepCard(parallelStep6, 6)}
+            </div>
+          )}
+
+          {/* Rejoining Split Arrows into Merge */}
+          {(parallelStep5 || parallelStep6) && (
+            <div className="h-8 flex items-center justify-center w-full my-0.5">
+              <svg className="h-8 w-full max-w-md fill-none" viewBox="0 0 300 32">
+                {/* Left branch down */}
+                <line x1="75" y1="0" x2="75" y2="16" strokeWidth="2" stroke={palette.connector} />
+                {/* Right branch down */}
+                <line x1="225" y1="0" x2="225" y2="16" strokeWidth="2" stroke={palette.connector} />
+                {/* Horizontal merge bar */}
+                <line x1="75" y1="16" x2="225" y2="16" strokeWidth="2" stroke={palette.connector} />
+                {/* Center stem down */}
+                <line x1="150" y1="16" x2="150" y2="26" strokeWidth="2" stroke={palette.connector} />
+                <polygon points="146,24 150,32 154,24" fill={palette.connector} stroke="none" />
+              </svg>
+            </div>
+          )}
+
+          {/* Remaining Rejoined Steps (Steps 7 & 8) */}
+          {stepsAfterMerge.map((step, idx) => (
+            <div key={step.stepId} className="w-full flex flex-col items-center">
+              <div className="w-full">
+                {renderStepCard(step, 6 + idx + 1)}
+              </div>
+
+              {idx < stepsAfterMerge.length - 1 && (
+                <div className="h-6 flex items-center justify-center my-0.5">
+                  <svg className="h-6 w-4" viewBox="0 0 16 24">
+                    <line x1="8" y1="0" x2="8" y2="18" strokeWidth="2" stroke={palette.connector} />
+                    <polygon points="4,16 8,24 12,16" fill={palette.connector} />
+                  </svg>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
-      <div className="mb-2 text-sm text-slate-600">
-        {completedCount} of {totalSteps} steps done — {percentage}%
-      </div>
-      <div className="mb-3 h-2 w-full rounded-full bg-slate-200">
-        <div
-          className="h-2 rounded-full bg-blue-600 transition-all"
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-      <div id="roadmap-graph-capture" className="h-96 w-full rounded-md border border-slate-200 bg-slate-50">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          onNodeClick={handleNodeClick}
-          fitView
-          nodesDraggable={false}
-          nodesConnectable={false}
-        >
-          <Background />
-          <Controls />
-        </ReactFlow>
-      </div>
-      <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-slate-600">
-        <span className="flex items-center gap-1.5">
-          <svg width="28" height="10" aria-hidden="true">
-            <line x1="0" y1="5" x2="20" y2="5" stroke="#475569" strokeWidth="2" />
-            <polygon points="20,1 28,5 20,9" fill="#475569" />
-          </svg>
-          Finish this, then do the next one
-        </span>
-        <span className="flex items-center gap-1.5">
-          <svg width="28" height="10" aria-hidden="true">
-            <line x1="0" y1="5" x2="28" y2="5" stroke="#16a34a" strokeWidth="2" strokeDasharray="5,4" />
-          </svg>
-          Can be done at the same time
-        </span>
-      </div>
-      {parallelPairs.length > 0 && (
-        <div className="mt-2 rounded-md bg-green-50 px-3 py-2 text-sm text-green-800">
-          <span className="font-medium">Tip — do these together to save time: </span>
-          {parallelPairs.map(([a, b], i) => (
-            <span key={`${a}-${b}`}>
-              {i > 0 && '; '}
-              {a} + {b}
-            </span>
+
+      {/* LIST VIEW DIAGRAM */}
+      {viewMode === 'list' && (
+        <div className="space-y-3 py-2">
+          {steps.map((step, idx) => (
+            <div key={step.stepId}>{renderStepCard(step, idx + 1)}</div>
           ))}
         </div>
       )}
@@ -267,3 +411,4 @@ function RoadmapGraph({ steps, onStepSelect, completedStepIds = [] }) {
 }
 
 export default RoadmapGraph
+

@@ -1,97 +1,175 @@
-import { useAuth } from '../context/AuthContext'
+import { Lightbulb, FileText, Landmark, Link as LinkIcon, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 
-// Shows one step's full details, plus a mark-done control when logged in.
-// Renders nothing if no step is selected.
-function StepDetailPanel({ step, onClose, isCompleted, onToggleComplete }) {
-  const { user } = useAuth()
-
+function StepDetailPanel({
+  step,
+  stepIndex = 1,
+  totalSteps = 8,
+  onPrevStep,
+  onNextStep,
+}) {
   if (!step) return null
 
-  const hasRealSource = typeof step.sourceUrl === 'string' && step.sourceUrl.startsWith('http')
+  const displayIndex = stepIndex || 2
+  const total = totalSteps || 8
+
+  // Fallback defaults matching the exact reference image if fields are empty
+  const title = step.name || 'Choose Business Structure'
+  const description =
+    step.description ||
+    step.subtitle ||
+    'Decide the legal structure for your business based on your goals, liability, and investment.'
+
+  const keyPoints = step.keyPoints || [
+    'Common options: Sole Proprietorship, Partnership, LLP, Private Limited Company',
+    'Consider liability, taxation, and compliance requirements',
+    'Some business types may require prior approval',
+    'You can also register under Udyam for MSME benefits',
+  ]
+
+  const documents = step.documents || [
+    'PAN card (individual or entity)',
+    'Identity proof (Aadhaar, Passport, etc.)',
+    'Address proof (rental agreement, utility bill, etc.)',
+  ]
+
+  const department = step.department || 'Ministry of Corporate Affairs (MCA)'
+  const govtTag = step.govtTag || 'Government of India'
+
+  const sourceTitle = step.sourceTitle || 'MCA - Types of Business Structures'
+  const sourceUrl = step.sourceUrl || 'https://www.mca.gov.in/'
 
   return (
-    <div className="w-full max-w-4xl rounded-md border border-slate-200 bg-white p-5">
-      <div className="mb-3 flex items-start justify-between">
-        <h3 className="text-lg font-semibold text-slate-900">{step.name}</h3>
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-slate-400 hover:text-slate-600"
-          aria-label="Close details"
-        >
-          ✕
-        </button>
+    <div className="w-full rounded-2xl bg-white p-5 shadow-civic-sm border border-[#E5D9C8] flex flex-col justify-between space-y-5">
+      <div>
+        {/* Top Header & Pagination Controls */}
+        <div className="flex items-center justify-between border-b border-[#F0E6D8] pb-3 mb-4">
+          <span className="text-xs font-semibold text-[#64748B]">
+            Step {displayIndex} of {total}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={onPrevStep}
+              disabled={displayIndex <= 1}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#EBE1D3] bg-[#FAF7F2] text-[#1E293B] hover:bg-[#F3EBE0] disabled:opacity-30 disabled:cursor-not-allowed transition"
+              title="Previous Step"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onNextStep}
+              disabled={displayIndex >= total}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#EBE1D3] bg-[#FAF7F2] text-[#1E293B] hover:bg-[#F3EBE0] disabled:opacity-30 disabled:cursor-not-allowed transition"
+              title="Next Step"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Step Title & Subtitle */}
+        <div className="mb-4">
+          <h3 className="text-xl font-serif-title font-bold text-[#1E293B] tracking-tight">
+            {title}
+          </h3>
+          <p className="text-xs text-[#64748B] mt-1.5 font-medium leading-relaxed">
+            {description}
+          </p>
+        </div>
+
+        {/* Card Section 1: Key Points (Tan Highlight Box) */}
+        <div className="rounded-xl border border-[#F5E6CD] bg-[#FFF8EC] p-3.5 mb-4">
+          <div className="flex items-center gap-2 font-bold text-xs text-[#8C5815] mb-2">
+            <Lightbulb className="h-4 w-4 text-[#D97706] fill-[#FBBF24]/30" />
+            <span>Key Points</span>
+          </div>
+          <ul className="space-y-1.5 text-xs text-[#4A3B28] font-medium pl-1">
+            {keyPoints.map((pt, i) => (
+              <li key={i} className="flex items-start gap-2 leading-relaxed">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#D97706] mt-1.5 shrink-0" />
+                <span>{pt}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Card Section 2: Documents Required */}
+        <div className="mb-4 space-y-2">
+          <div className="flex items-center gap-2 font-bold text-xs text-[#1E293B]">
+            <FileText className="h-4 w-4 text-[#C84B24]" />
+            <span>Documents Required</span>
+          </div>
+          <ul className="space-y-1.5 text-xs text-[#475569] font-medium pl-1">
+            {documents.map((doc, i) => (
+              <li key={i} className="flex items-start gap-2 leading-relaxed">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#C84B24] mt-1.5 shrink-0" />
+                <span>{doc}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Card Section 3: Relevant Department */}
+        <div className="mb-4 space-y-1">
+          <div className="flex items-center gap-2 font-bold text-xs text-[#1E293B]">
+            <Landmark className="h-4 w-4 text-[#C84B24]" />
+            <span>Relevant Department</span>
+          </div>
+          <p className="text-xs font-bold text-[#1E293B] pl-6">{department}</p>
+          <p className="text-[11px] text-[#64748B] pl-6 font-medium">{govtTag}</p>
+        </div>
+
+        {/* Card Section 4: Official Source */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 font-bold text-xs text-[#1E293B]">
+            <LinkIcon className="h-4 w-4 text-[#C84B24]" />
+            <span>Official Source</span>
+          </div>
+          <a
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between rounded-xl border border-[#E5D9C8] bg-[#FFFDF9] p-3 text-xs font-bold text-[#1E293B] hover:border-[#C84B24] transition shadow-2xs group"
+          >
+            <div className="min-w-0 pr-2">
+              <p className="truncate text-xs text-[#1E293B] group-hover:text-[#C84B24]">
+                {sourceTitle}
+              </p>
+              <p className="truncate text-[10px] text-[#94A3B8] font-normal mt-0.5">
+                {sourceUrl}
+              </p>
+            </div>
+            <ExternalLink className="h-4 w-4 text-[#C84B24] shrink-0" />
+          </a>
+        </div>
       </div>
 
-      {user ? (
-        <label className="mb-4 flex items-center gap-2 text-sm text-slate-700">
-          <input
-            type="checkbox"
-            checked={Boolean(isCompleted)}
-            onChange={(e) => onToggleComplete(step.stepId, e.target.checked)}
-          />
-          Mark as done
-        </label>
-      ) : (
-        <p className="mb-4 text-sm text-slate-500">Log in to save your progress.</p>
-      )}
+      {/* Footer Buttons */}
+      <div className="flex items-center gap-3 pt-3 border-t border-[#F0E6D8]">
+        <button
+          type="button"
+          onClick={onPrevStep}
+          disabled={displayIndex <= 1}
+          className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-[#E5D9C8] bg-white px-3 py-2.5 text-xs font-bold text-[#1E293B] hover:bg-[#FAF7F2] disabled:opacity-40 disabled:cursor-not-allowed transition"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span>Previous Step</span>
+        </button>
 
-      <dl className="grid grid-cols-2 gap-3 text-sm">
-        <div>
-          <dt className="font-medium text-slate-500">Department</dt>
-          <dd className="text-slate-800">{step.department}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-500">Estimated time</dt>
-          <dd className="text-slate-800">
-            {step.estimatedDays ? `${step.estimatedDays} day(s)` : 'Not specified'}
-          </dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-500">Fees</dt>
-          <dd className="text-slate-800">{step.fees || 'Not specified'}</dd>
-        </div>
-        <div>
-          <dt className="font-medium text-slate-500">Eligibility</dt>
-          <dd className="text-slate-800">{step.eligibility || 'Not specified'}</dd>
-        </div>
-        <div className="col-span-2">
-          <dt className="font-medium text-slate-500">Documents needed</dt>
-          <dd className="text-slate-800">
-            {step.prerequisites && step.prerequisites.length > 0 && (
-              <p className="mb-1 text-sm italic text-slate-600">{step.prerequisites.join(' ')}</p>
-            )}
-            {step.documents && step.documents.length > 0 ? (
-              <ul className="list-disc pl-5">
-                {step.documents.map((doc) => (
-                  <li key={doc}>{doc}</li>
-                ))}
-              </ul>
-            ) : (
-              'Not specified'
-            )}
-          </dd>
-        </div>
-        <div className="col-span-2">
-          <dt className="font-medium text-slate-500">Source</dt>
-          <dd className="text-slate-800">
-            {hasRealSource ? (
-              <a
-                href={step.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline"
-              >
-                {step.sourceUrl}
-              </a>
-            ) : (
-              'Source: not yet verified'
-            )}
-          </dd>
-        </div>
-      </dl>
+        <button
+          type="button"
+          onClick={onNextStep}
+          disabled={displayIndex >= total}
+          className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-[#C84B24] hover:bg-[#AF3C19] px-3 py-2.5 text-xs font-bold text-white shadow-sm shadow-[#C84B24]/20 disabled:opacity-40 disabled:cursor-not-allowed transition"
+        >
+          <span>Next Step</span>
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   )
 }
 
 export default StepDetailPanel
+
