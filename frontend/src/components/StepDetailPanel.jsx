@@ -1,4 +1,4 @@
-import { Lightbulb, FileText, Landmark, Link as LinkIcon, ChevronLeft, ChevronRight, ExternalLink, CheckCircle2 } from 'lucide-react'
+import { Lightbulb, FileText, Landmark, Link as LinkIcon, ChevronLeft, ChevronRight, ExternalLink, CheckCircle2, ShieldCheck } from 'lucide-react'
 
 function StepDetailPanel({
   step,
@@ -39,6 +39,7 @@ function StepDetailPanel({
 
   const sourceTitle = step.sourceTitle || 'MCA - Types of Business Structures'
   const sourceUrl = step.sourceUrl || 'https://www.mca.gov.in/'
+  const lastVerified = step.lastVerified ? new Date(step.lastVerified).toLocaleDateString() : null
 
   return (
     <div className="w-full rounded-2xl bg-white p-5 shadow-civic-sm border border-[#E5D9C8] flex flex-col gap-4">
@@ -137,9 +138,17 @@ function StepDetailPanel({
 
         {/* Card Section 4: Official Source */}
         <div className="space-y-2">
-          <div className="flex items-center gap-2 font-bold text-xs text-[#1E293B]">
-            <LinkIcon className="h-4 w-4 text-[#C84B24]" />
-            <span>Official Source</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 font-bold text-xs text-[#1E293B]">
+              <LinkIcon className="h-4 w-4 text-[#C84B24]" />
+              <span>Official Source</span>
+            </div>
+            {lastVerified && (
+              <span className="flex items-center gap-1 rounded-full border border-[#166534]/30 bg-[#F0FDF4] px-2 py-0.5 text-[10px] font-bold text-[#166534]">
+                <ShieldCheck className="h-3 w-3" />
+                Verified {lastVerified}
+              </span>
+            )}
           </div>
           <a
             href={sourceUrl}

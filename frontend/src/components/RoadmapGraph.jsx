@@ -9,7 +9,8 @@ import {
   List,
   Sparkles,
   Palette,
-  Check
+  Check,
+  ShieldCheck
 } from 'lucide-react'
 
 // Defined Color Combination Palettes for the Flowchart
@@ -285,6 +286,19 @@ function RoadmapGraph({
                   >
                     <GitFork className="h-2.5 w-2.5" />
                     Parallel
+                  </span>
+                )}
+                {step.sourceUrl && (
+                  <span
+                    className="flex items-center gap-0.5 rounded-full border border-[#166534]/30 bg-[#F0FDF4] px-1.5 py-0.5 text-[9px] font-bold text-[#166534]"
+                    title={
+                      step.lastVerified
+                        ? `Verified on ${new Date(step.lastVerified).toLocaleDateString()}`
+                        : 'Verified from an official source'
+                    }
+                  >
+                    <ShieldCheck className="h-2.5 w-2.5" />
+                    Verified
                   </span>
                 )}
               </div>

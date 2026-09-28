@@ -43,6 +43,7 @@ function formatTaskData(data, fallbackText, fallbackCity) {
       govtTag: s.govtTag || '',
       sourceTitle: s.sourceTitle || `${s.department || 'Official'} Portal`,
       sourceUrl: s.sourceUrl,
+      lastVerified: s.lastVerified,
       fees: s.fees,
       estimatedDays: s.estimatedDays,
       eligibility: s.eligibility,
