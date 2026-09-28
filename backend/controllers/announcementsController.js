@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Announcement = require('../models/Announcement');
 const Task = require('../models/Task');
+const User = require('../models/User');
 
 const EDITABLE_FIELDS = ['title', 'body', 'relatedTaskId', 'isActive'];
 
@@ -78,7 +79,8 @@ async function listAll(req, res) {
   return res.status(200).json({ success: true, data: announcements });
 }
 
-// GET /api/announcements?taskId=...
+// GET /api/announcements?taskId=... — public, but personalizes isRead when
+// called with a valid token (see authenticateOptional).
 async function listActive(req, res) {
   const { taskId } = req.query;
   const hasValidTaskId = taskId && mongoose.isValidObjectId(taskId);
@@ -88,7 +90,32 @@ async function listActive(req, res) {
     : { isActive: true, relatedTaskId: null };
 
   const announcements = await Announcement.find(filter).sort({ createdAt: -1 });
-  return res.status(200).json({ success: true, data: announcements });
+
+  let readIdSet = new Set();
+  if (req.user) {
+    const user = await User.findById(req.user.id).select('readAnnouncementIds');
+    if (user) readIdSet = new Set(user.readAnnouncementIds.map((id) => id.toString()));
+  }
+
+  const data = announcements.map((a) => ({ ...a.toObject(), isRead: readIdSet.has(a._id.toString()) }));
+  return res.status(200).json({ success: true, data });
 }
 
-module.exports = { create, update, listAll, listActive };
+// POST /api/announcements/read — body: { ids: string[] }
+// Marks the given announcements as read for the logged-in user, so they stop
+// counting toward that user's unread badge on every future login/visit.
+async function markRead(req, res) {
+  const { ids } = req.body || {};
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, error: 'ids must be a non-empty array.' });
+  }
+  const validIds = ids.filter((id) => mongoose.isValidObjectId(id));
+  if (validIds.length === 0) {
+    return res.status(400).json({ success: false, error: 'No valid announcement ids provided.' });
+  }
+
+  await User.findByIdAndUpdate(req.user.id, { $addToSet: { readAnnouncementIds: { $each: validIds } } });
+  return res.status(200).json({ success: true });
+}
+
+module.exports = { create, update, listAll, listActive, markRead };

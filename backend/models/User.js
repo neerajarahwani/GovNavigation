@@ -7,6 +7,8 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    // Announcements this user has seen — drives the bell's per-user unread count.
+    readAnnouncementIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Announcement' }],
   },
   { timestamps: true }
 );
